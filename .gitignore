@@ -8,7 +8,12 @@ dist/
 # Build outputs
 mobile/android/app/build/
 mobile/android/build/
+mobile/android/.gradle/
+mobile/android/app/.cxx/
 mobile/ios/build/
+mobile/ios/.xcode.env.local
+mobile/ios/Pods/
+mobile/ios/Podfile.lock
 backend/dist/
 
 # IDE

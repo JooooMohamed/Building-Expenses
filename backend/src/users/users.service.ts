@@ -68,4 +68,38 @@ export class UsersService {
   async updateFcmToken(id: string, token: string): Promise<void> {
     await this.userModel.findByIdAndUpdate(id, { $addToSet: { fcmTokens: token } });
   }
+
+  async setPasswordResetToken(email: string, token: string, expiry: Date): Promise<boolean> {
+    const result = await this.userModel.findOneAndUpdate(
+      { email: email.toLowerCase(), isActive: true },
+      { passwordResetToken: token, passwordResetExpiry: expiry },
+    );
+    return !!result;
+  }
+
+  async findByResetToken(token: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({
+      passwordResetToken: token,
+      passwordResetExpiry: { $gt: new Date() },
+      isActive: true,
+    });
+  }
+
+  async resetPassword(userId: string, hash: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, {
+      passwordHash: hash,
+      passwordResetToken: null,
+      passwordResetExpiry: null,
+      refreshToken: null,
+    });
+  }
+
+  async updateProfile(id: string, data: { phone?: string; firstName?: string; lastName?: string }): Promise<UserDocument> {
+    const user = await this.userModel
+      .findByIdAndUpdate(id, { $set: data }, { new: true })
+      .select('-passwordHash -refreshToken -passwordResetToken')
+      .exec();
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
 }

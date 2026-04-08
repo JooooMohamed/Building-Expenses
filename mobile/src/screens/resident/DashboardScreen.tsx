@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -6,156 +6,322 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-} from 'react-native';
-import { useQuery } from '@tanstack/react-query';
-import { getDashboard } from '../../api/resident';
-import { useAuthStore } from '../../store/auth';
-import type { ExpenseShare } from '../../types';
-
-const categoryColors: Record<string, string> = {
-  fixed: '#4361ee',
-  maintenance: '#f77f00',
-  elevator: '#7209b7',
-  project: '#2ec4b6',
-  emergency: '#e63946',
-};
-
-function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = { paid: '#2d6a4f', partial: '#e9c46a', unpaid: '#e63946' };
-  const bg: Record<string, string> = { paid: '#d8f3dc', partial: '#fff3cd', unpaid: '#fce4ec' };
-  return (
-    <View style={[styles.badge, { backgroundColor: bg[status] || '#eee' }]}>
-      <Text style={[styles.badgeText, { color: colors[status] || '#333' }]}>
-        {status.toUpperCase()}
-      </Text>
-    </View>
-  );
-}
+} from "react-native";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigation } from "@react-navigation/native";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { getDashboard } from "../../api/resident";
+import { useAuthStore } from "../../store/auth";
+import {
+  Card,
+  StatusBadge,
+  SectionHeader,
+  EmptyState,
+} from "../../components/ui";
+import {
+  colors,
+  spacing,
+  radius,
+  typography,
+  shadow,
+  categoryColors,
+} from "../../theme";
+import type { ExpenseShare } from "../../types";
 
 function DueItem({ share }: { share: ExpenseShare }) {
-  const category = share.expenseId?.category || 'fixed';
+  const category = share.expenseId?.category || "fixed";
   return (
-    <View style={styles.dueItem}>
-      <View style={[styles.categoryDot, { backgroundColor: categoryColors[category] || '#999' }]} />
-      <View style={styles.dueInfo}>
-        <Text style={styles.dueTitle}>{share.expenseId?.title || 'Expense'}</Text>
-        <Text style={styles.duePeriod}>{share.period}</Text>
+    <Card style={styles.dueItem}>
+      <View style={styles.dueRow}>
+        <View
+          style={[
+            styles.categoryIcon,
+            {
+              backgroundColor:
+                (categoryColors[category] || colors.textTertiary) + "15",
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.categoryDot,
+              {
+                backgroundColor:
+                  categoryColors[category] || colors.textTertiary,
+              },
+            ]}
+          />
+        </View>
+        <View style={styles.dueInfo}>
+          <Text style={styles.dueTitle}>
+            {share.expenseId?.title || "Expense"}
+          </Text>
+          <Text style={styles.duePeriod}>{share.period}</Text>
+        </View>
+        <View style={styles.dueRight}>
+          <Text style={styles.dueAmount}>
+            {share.amount.toLocaleString()} TRY
+          </Text>
+          <StatusBadge status={share.status} />
+        </View>
       </View>
-      <View style={styles.dueRight}>
-        <Text style={styles.dueAmount}>{share.amount.toLocaleString()} TRY</Text>
-        <StatusBadge status={share.status} />
-      </View>
-    </View>
+    </Card>
   );
 }
 
 export default function DashboardScreen() {
   const user = useAuthStore((s) => s.user);
+  const navigation = useNavigation<any>();
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
-    queryKey: ['dashboard'],
+    queryKey: ["dashboard"],
     queryFn: getDashboard,
   });
 
   const summary = data?.summary;
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
+  const quickActions = [
+    {
+      icon: "credit-card-outline",
+      label: "Pay Now",
+      color: colors.primary,
+      screen: "Payments",
+    },
+    {
+      icon: "history",
+      label: "History",
+      color: colors.elevator,
+      screen: "Payments",
+    },
+    {
+      icon: "chart-bar",
+      label: "Expenses",
+      color: colors.maintenance,
+      screen: "Expenses",
+    },
+    {
+      icon: "bullhorn-outline",
+      label: "News",
+      color: colors.project,
+      screen: "Announcements",
+    },
+  ];
 
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+      }
+      showsVerticalScrollIndicator={false}
     >
       <View style={styles.greeting}>
-        <Text style={styles.greetingText}>
-          Welcome back, {user?.firstName || 'Resident'}
-        </Text>
+        <View>
+          <Text style={styles.greetingLabel}>{greeting}</Text>
+          <Text style={styles.greetingName}>
+            {user?.firstName || "Resident"} 👋
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.profileButton}
+          onPress={() => navigation.navigate("Profile")}
+        >
+          <Icon
+            name="account-circle-outline"
+            size={28}
+            color={colors.textPrimary}
+          />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Remaining Balance</Text>
+        <View style={styles.balanceTop}>
+          <Icon name="wallet-outline" size={24} color="rgba(255,255,255,0.8)" />
+          <Text style={styles.balanceLabel}>Remaining Balance</Text>
+        </View>
         <Text style={styles.balanceAmount}>
-          {isLoading ? '...' : `${(summary?.remainingBalance || 0).toLocaleString()} TRY`}
+          {isLoading
+            ? "..."
+            : `${(summary?.remainingBalance || 0).toLocaleString()} TRY`}
         </Text>
-
         <View style={styles.balanceRow}>
           <View style={styles.balanceStat}>
-            <Text style={styles.statLabel}>Total Due</Text>
-            <Text style={styles.statValue}>{(summary?.totalDue || 0).toLocaleString()}</Text>
+            <Icon
+              name="arrow-up-circle-outline"
+              size={18}
+              color="rgba(255,255,255,0.7)"
+            />
+            <View style={styles.statText}>
+              <Text style={styles.statLabel}>Total Due</Text>
+              <Text style={styles.statValue}>
+                {(summary?.totalDue || 0).toLocaleString()}
+              </Text>
+            </View>
           </View>
-          <View style={styles.divider} />
+          <View style={styles.balanceDivider} />
           <View style={styles.balanceStat}>
-            <Text style={styles.statLabel}>Total Paid</Text>
-            <Text style={[styles.statValue, { color: '#2d6a4f' }]}>
-              {(summary?.totalPaid || 0).toLocaleString()}
-            </Text>
+            <Icon
+              name="check-circle-outline"
+              size={18}
+              color="rgba(255,255,255,0.7)"
+            />
+            <View style={styles.statText}>
+              <Text style={styles.statLabel}>Total Paid</Text>
+              <Text style={styles.statValue}>
+                {(summary?.totalPaid || 0).toLocaleString()}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
 
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionIcon}>{'💳'}</Text>
-          <Text style={styles.actionLabel}>Pay Now</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionIcon}>{'📋'}</Text>
-          <Text style={styles.actionLabel}>History</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionIcon}>{'🏢'}</Text>
-          <Text style={styles.actionLabel}>Expenses</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionIcon}>{'📢'}</Text>
-          <Text style={styles.actionLabel}>News</Text>
-        </TouchableOpacity>
+        {quickActions.map((action) => (
+          <TouchableOpacity
+            key={action.label}
+            style={styles.actionButton}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate(action.screen)}
+          >
+            <View
+              style={[
+                styles.actionIconBg,
+                { backgroundColor: action.color + "12" },
+              ]}
+            >
+              <Icon name={action.icon} size={22} color={action.color} />
+            </View>
+            <Text style={styles.actionLabel}>{action.label}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Recent Dues</Text>
-        {data?.recentDues?.length === 0 && (
-          <Text style={styles.emptyText}>No dues found</Text>
+        <SectionHeader title="Recent Dues" />
+        {data?.recentDues?.length === 0 ? (
+          <EmptyState
+            icon="check-circle-outline"
+            title="All caught up!"
+            subtitle="No outstanding dues"
+          />
+        ) : (
+          data?.recentDues?.map((share) => (
+            <DueItem key={share._id} share={share} />
+          ))
         )}
-        {data?.recentDues?.map((share) => (
-          <DueItem key={share._id} share={share} />
-        ))}
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
-  greeting: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
-  greetingText: { fontSize: 22, fontWeight: '700', color: '#1a1a2e' },
-  balanceCard: { margin: 20, backgroundColor: '#4361ee', borderRadius: 20, padding: 24 },
-  balanceLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginBottom: 4 },
-  balanceAmount: { color: '#fff', fontSize: 36, fontWeight: '700', marginBottom: 20 },
-  balanceRow: { flexDirection: 'row', alignItems: 'center' },
-  balanceStat: { flex: 1, alignItems: 'center' },
-  statLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 12, marginBottom: 4 },
-  statValue: { color: '#fff', fontSize: 18, fontWeight: '600' },
-  divider: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.3)' },
-  actions: { flexDirection: 'row', paddingHorizontal: 20, gap: 12 },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { paddingBottom: spacing.xxxl },
+  greeting: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  greetingLabel: { ...typography.caption, color: colors.textSecondary },
+  greetingName: { ...typography.h2, color: colors.textPrimary, marginTop: 2 },
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surfaceSecondary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  balanceCard: {
+    marginHorizontal: spacing.xl,
+    marginTop: spacing.lg,
+    backgroundColor: colors.primary,
+    borderRadius: radius.xl,
+    padding: spacing.xxl,
+    ...shadow.lg,
+  },
+  balanceTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  balanceLabel: { ...typography.caption, color: "rgba(255,255,255,0.8)" },
+  balanceAmount: {
+    color: colors.white,
+    fontSize: 36,
+    fontWeight: "700",
+    marginBottom: spacing.xl,
+  },
+  balanceRow: { flexDirection: "row", alignItems: "center" },
+  balanceStat: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  statText: {},
+  statLabel: { ...typography.small, color: "rgba(255,255,255,0.7)" },
+  statValue: { color: colors.white, ...typography.bodyBold, marginTop: 1 },
+  balanceDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    marginHorizontal: spacing.md,
+  },
+  actions: {
+    flexDirection: "row",
+    paddingHorizontal: spacing.xl,
+    marginTop: spacing.xl,
+    gap: spacing.md,
+  },
   actionButton: {
-    flex: 1, backgroundColor: '#fff', borderRadius: 14, paddingVertical: 16,
-    alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.lg,
+    alignItems: "center",
+    ...shadow.sm,
   },
-  actionIcon: { fontSize: 24, marginBottom: 6 },
-  actionLabel: { fontSize: 12, fontWeight: '600', color: '#495057' },
-  section: { margin: 20 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1a1a2e', marginBottom: 12 },
-  emptyText: { color: '#6c757d', textAlign: 'center', paddingVertical: 20 },
-  dueItem: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
-    borderRadius: 12, padding: 16, marginBottom: 8,
+  actionIconBg: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.sm,
   },
-  categoryDot: { width: 10, height: 10, borderRadius: 5, marginRight: 12 },
+  actionLabel: { ...typography.captionBold, color: colors.textPrimary },
+  section: { marginTop: spacing.xxl, paddingHorizontal: spacing.xl },
+  dueItem: { marginBottom: spacing.sm },
+  dueRow: { flexDirection: "row", alignItems: "center" },
+  categoryIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.md,
+  },
+  categoryDot: { width: 12, height: 12, borderRadius: 6 },
   dueInfo: { flex: 1 },
-  dueTitle: { fontSize: 14, fontWeight: '600', color: '#1a1a2e' },
-  duePeriod: { fontSize: 12, color: '#6c757d', marginTop: 2 },
-  dueRight: { alignItems: 'flex-end' },
-  dueAmount: { fontSize: 14, fontWeight: '700', color: '#1a1a2e', marginBottom: 4 },
-  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  badgeText: { fontSize: 10, fontWeight: '700' },
+  dueTitle: { ...typography.bodyBold, color: colors.textPrimary },
+  duePeriod: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  dueRight: { alignItems: "flex-end" },
+  dueAmount: {
+    ...typography.bodyBold,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
 });

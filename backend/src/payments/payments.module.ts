@@ -5,6 +5,8 @@ import { ExpenseShare, ExpenseShareSchema } from '../expenses/schemas/expense-sh
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
 import { ResidentPaymentsController } from './resident-payments.controller';
+import { NestpayProvider } from './providers/nestpay.provider';
+import { BillingModule } from '../billing/billing.module';
 
 @Module({
   imports: [
@@ -12,9 +14,10 @@ import { ResidentPaymentsController } from './resident-payments.controller';
       { name: Payment.name, schema: PaymentSchema },
       { name: ExpenseShare.name, schema: ExpenseShareSchema },
     ]),
+    BillingModule,
   ],
   controllers: [PaymentsController, ResidentPaymentsController],
-  providers: [PaymentsService],
+  providers: [PaymentsService, NestpayProvider],
   exports: [PaymentsService],
 })
 export class PaymentsModule {}

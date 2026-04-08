@@ -6,6 +6,8 @@ import type {
   AggregatedExpense,
   Announcement,
   AppNotification,
+  ResidentBalance,
+  PaginatedResponse,
 } from '../types';
 
 interface DashboardResponse {
@@ -15,6 +17,11 @@ interface DashboardResponse {
 
 export async function getDashboard(): Promise<DashboardResponse> {
   const { data } = await client.get<DashboardResponse>('/me/dashboard');
+  return data;
+}
+
+export async function getMyBalance(): Promise<ResidentBalance> {
+  const { data } = await client.get<ResidentBalance>('/me/balance');
   return data;
 }
 
@@ -40,9 +47,13 @@ export async function getAnnouncements(): Promise<Announcement[]> {
   return data;
 }
 
-export async function getNotifications(): Promise<AppNotification[]> {
-  const { data } = await client.get<AppNotification[]>('/me/notifications');
+export async function getNotifications(): Promise<PaginatedResponse<AppNotification>> {
+  const { data } = await client.get<PaginatedResponse<AppNotification>>('/me/notifications');
   return data;
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await client.patch('/me/notifications/read-all');
 }
 
 export async function markNotificationRead(id: string): Promise<void> {

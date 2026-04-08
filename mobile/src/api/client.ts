@@ -1,16 +1,24 @@
-import axios from 'axios';
-import { getSecureItem, setSecureItem, deleteSecureItem } from '../utils/secureStorage';
+import axios from "axios";
+import { Platform } from "react-native";
+import {
+  getSecureItem,
+  setSecureItem,
+  deleteSecureItem,
+} from "../utils/secureStorage";
 
-const API_BASE = 'http://localhost:3000/api/v1';
+const API_BASE =
+  Platform.OS === "android"
+    ? "http://10.0.2.2:3000/api/v1"
+    : "http://localhost:3000/api/v1";
 
 const client = axios.create({
   baseURL: API_BASE,
   timeout: 15000,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { "Content-Type": "application/json" },
 });
 
 client.interceptors.request.use(async (config) => {
-  const token = await getSecureItem('accessToken');
+  const token = await getSecureItem("accessToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -26,19 +34,21 @@ client.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = await getSecureItem('refreshToken');
-        if (!refreshToken) throw new Error('No refresh token');
+        const refreshToken = await getSecureItem("refreshToken");
+        if (!refreshToken) throw new Error("No refresh token");
 
-        const { data } = await axios.post(`${API_BASE}/auth/refresh`, { refreshToken });
+        const { data } = await axios.post(`${API_BASE}/auth/refresh`, {
+          refreshToken,
+        });
 
-        await setSecureItem('accessToken', data.accessToken);
-        await setSecureItem('refreshToken', data.refreshToken);
+        await setSecureItem("accessToken", data.accessToken);
+        await setSecureItem("refreshToken", data.refreshToken);
 
         originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
         return client(originalRequest);
       } catch {
-        await deleteSecureItem('accessToken');
-        await deleteSecureItem('refreshToken');
+        await deleteSecureItem("accessToken");
+        await deleteSecureItem("refreshToken");
       }
     }
 

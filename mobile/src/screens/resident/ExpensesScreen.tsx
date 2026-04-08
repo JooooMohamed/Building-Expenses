@@ -1,30 +1,42 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
-import { getBuildingExpenses } from '../../api/resident';
-import dayjs from 'dayjs';
-
-const categoryLabels: Record<string, string> = {
-  fixed: 'Fixed / Recurring',
-  maintenance: 'Maintenance',
-  elevator: 'Elevator',
-  project: 'Projects',
-  emergency: 'Emergency',
-};
-
-const categoryColors: Record<string, string> = {
-  fixed: '#4361ee',
-  maintenance: '#f77f00',
-  elevator: '#7209b7',
-  project: '#2ec4b6',
-  emergency: '#e63946',
-};
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  RefreshControl,
+  TouchableOpacity,
+} from "react-native";
+import { useQuery } from "@tanstack/react-query";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { getBuildingExpenses } from "../../api/resident";
+import {
+  Card,
+  SectionHeader,
+  EmptyState,
+  ScreenHeader,
+} from "../../components/ui";
+import {
+  colors,
+  spacing,
+  radius,
+  typography,
+  shadow,
+  categoryColors,
+  categoryLabels,
+  categoryIcons,
+} from "../../theme";
+import dayjs from "dayjs";
 
 export default function ExpensesScreen() {
-  const [period] = useState(dayjs().format('YYYY-MM'));
+  const [periodOffset, setPeriodOffset] = useState(0);
+  const period = dayjs().subtract(periodOffset, "month").format("YYYY-MM");
+  const displayPeriod = dayjs()
+    .subtract(periodOffset, "month")
+    .format("MMMM YYYY");
 
   const { data, isRefetching, refetch } = useQuery({
-    queryKey: ['building-expenses', period],
+    queryKey: ["building-expenses", period],
     queryFn: () => getBuildingExpenses(period),
   });
 
@@ -33,73 +45,195 @@ export default function ExpensesScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+      }
+      showsVerticalScrollIndicator={false}
     >
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Building Expenses</Text>
-        <Text style={styles.headerPeriod}>{dayjs(period).format('MMMM YYYY')}</Text>
+      <ScreenHeader title="Building Expenses" />
+
+      <View style={styles.periodSelector}>
+        <TouchableOpacity
+          style={styles.periodArrow}
+          onPress={() => setPeriodOffset((p) => p + 1)}
+        >
+          <Icon name="chevron-left" size={24} color={colors.textPrimary} />
+        </TouchableOpacity>
+        <View style={styles.periodCenter}>
+          <Icon name="calendar-month" size={18} color={colors.primary} />
+          <Text style={styles.periodText}>{displayPeriod}</Text>
+        </View>
+        <TouchableOpacity
+          style={[
+            styles.periodArrow,
+            periodOffset === 0 && styles.periodArrowDisabled,
+          ]}
+          onPress={() => periodOffset > 0 && setPeriodOffset((p) => p - 1)}
+          disabled={periodOffset === 0}
+        >
+          <Icon
+            name="chevron-right"
+            size={24}
+            color={
+              periodOffset === 0 ? colors.textTertiary : colors.textPrimary
+            }
+          />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.totalCard}>
-        <Text style={styles.totalLabel}>Total Building Expenses</Text>
+        <View style={styles.totalTop}>
+          <Icon name="chart-arc" size={24} color="rgba(255,255,255,0.8)" />
+          <Text style={styles.totalLabel}>Total Building Expenses</Text>
+        </View>
         <Text style={styles.totalAmount}>{total.toLocaleString()} TRY</Text>
       </View>
 
-      <View style={styles.breakdown}>
-        <Text style={styles.sectionTitle}>Breakdown by Category</Text>
-        {data?.map((item) => {
-          const pct = total > 0 ? (item.total / total) * 100 : 0;
-          return (
-            <View key={item._id} style={styles.categoryRow}>
-              <View style={styles.categoryLeft}>
-                <View
-                  style={[styles.dot, { backgroundColor: categoryColors[item._id] || '#999' }]}
-                />
-                <Text style={styles.categoryName}>
-                  {categoryLabels[item._id] || item._id}
-                </Text>
-              </View>
-              <View style={styles.categoryRight}>
-                <Text style={styles.categoryAmount}>{item.total.toLocaleString()} TRY</Text>
-                <Text style={styles.categoryPct}>{pct.toFixed(1)}%</Text>
-              </View>
-            </View>
-          );
-        })}
+      <View style={styles.section}>
+        <SectionHeader title="Breakdown by Category" />
+        {!data || data.length === 0 ? (
+          <EmptyState
+            icon="chart-bar"
+            title="No expenses"
+            subtitle={`No expenses recorded for ${displayPeriod}`}
+          />
+        ) : (
+          data.map((item) => {
+            const pct = total > 0 ? (item.total / total) * 100 : 0;
+            const color = categoryColors[item._id] || colors.textTertiary;
+            const iconName = categoryIcons[item._id] || "help-circle-outline";
+            return (
+              <Card key={item._id} style={styles.categoryCard}>
+                <View style={styles.categoryRow}>
+                  <View
+                    style={[
+                      styles.categoryIconBg,
+                      { backgroundColor: color + "15" },
+                    ]}
+                  >
+                    <Icon name={iconName} size={20} color={color} />
+                  </View>
+                  <View style={styles.categoryInfo}>
+                    <Text style={styles.categoryName}>
+                      {categoryLabels[item._id] || item._id}
+                    </Text>
+                    <View style={styles.progressBg}>
+                      <View
+                        style={[
+                          styles.progressFill,
+                          {
+                            width: `${Math.min(pct, 100)}%`,
+                            backgroundColor: color,
+                          },
+                        ]}
+                      />
+                    </View>
+                  </View>
+                  <View style={styles.categoryRight}>
+                    <Text style={styles.categoryAmount}>
+                      {item.total.toLocaleString()} TRY
+                    </Text>
+                    <Text style={[styles.categoryPct, { color }]}>
+                      {pct.toFixed(1)}%
+                    </Text>
+                  </View>
+                </View>
+              </Card>
+            );
+          })
+        )}
       </View>
 
       <Text style={styles.disclaimer}>
-        These are aggregated building expenses. Individual shares may vary based on unit size.
+        These are aggregated building expenses. Individual shares may vary based
+        on unit size.
       </Text>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
-  header: { paddingHorizontal: 20, paddingTop: 16 },
-  headerTitle: { fontSize: 22, fontWeight: '700', color: '#1a1a2e' },
-  headerPeriod: { fontSize: 14, color: '#6c757d', marginTop: 4 },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { paddingBottom: spacing.xxxl },
+  periodSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: spacing.xl,
+    marginTop: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    ...shadow.sm,
+  },
+  periodArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  periodArrowDisabled: { opacity: 0.4 },
+  periodCenter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  periodText: { ...typography.bodyBold, color: colors.textPrimary },
   totalCard: {
-    margin: 20, backgroundColor: '#1a1a2e', borderRadius: 16,
-    padding: 24, alignItems: 'center',
+    marginHorizontal: spacing.xl,
+    marginTop: spacing.lg,
+    backgroundColor: colors.textPrimary,
+    borderRadius: radius.xl,
+    padding: spacing.xxl,
+    ...shadow.lg,
   },
-  totalLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
-  totalAmount: { color: '#fff', fontSize: 32, fontWeight: '700', marginTop: 8 },
-  breakdown: { marginHorizontal: 20, marginBottom: 12 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1a1a2e', marginBottom: 12 },
-  categoryRow: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
-    borderRadius: 12, padding: 16, marginBottom: 8,
+  totalTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
-  categoryLeft: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  dot: { width: 12, height: 12, borderRadius: 6, marginRight: 12 },
-  categoryName: { fontSize: 14, fontWeight: '600', color: '#1a1a2e' },
-  categoryRight: { alignItems: 'flex-end' },
-  categoryAmount: { fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
-  categoryPct: { fontSize: 12, color: '#6c757d', marginTop: 2 },
+  totalLabel: { ...typography.caption, color: "rgba(255,255,255,0.7)" },
+  totalAmount: {
+    color: colors.white,
+    fontSize: 32,
+    fontWeight: "700",
+    marginTop: spacing.xs,
+  },
+  section: { marginTop: spacing.xxl, paddingHorizontal: spacing.xl },
+  categoryCard: { marginBottom: spacing.sm },
+  categoryRow: { flexDirection: "row", alignItems: "center" },
+  categoryIconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.md,
+  },
+  categoryInfo: { flex: 1 },
+  categoryName: {
+    ...typography.bodyBold,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  progressBg: {
+    height: 4,
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  progressFill: { height: 4, borderRadius: 2 },
+  categoryRight: { alignItems: "flex-end", marginLeft: spacing.md },
+  categoryAmount: { ...typography.bodyBold, color: colors.textPrimary },
+  categoryPct: { ...typography.captionBold, marginTop: 2 },
   disclaimer: {
-    marginHorizontal: 20, marginBottom: 30, fontSize: 12,
-    color: '#adb5bd', textAlign: 'center',
+    ...typography.small,
+    color: colors.textTertiary,
+    textAlign: "center",
+    marginHorizontal: spacing.xl,
+    marginTop: spacing.xl,
   },
 });

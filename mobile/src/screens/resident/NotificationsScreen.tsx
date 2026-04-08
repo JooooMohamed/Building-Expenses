@@ -1,20 +1,30 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getNotifications, markNotificationRead } from '../../api/resident';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import type { AppNotification } from '../../types';
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+} from "react-native";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { getNotifications, markNotificationRead } from "../../api/resident";
+import { EmptyState, ScreenHeader } from "../../components/ui";
+import { colors, spacing, radius, typography, shadow } from "../../theme";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import type { AppNotification } from "../../types";
 
 dayjs.extend(relativeTime);
 
-const typeIcons: Record<string, string> = {
-  payment_reminder: '🔔',
-  payment_confirmed: '✅',
-  new_expense: '📄',
-  announcement: '📢',
-  project_update: '🏗',
-  overdue: '⚠️',
+const typeConfig: Record<string, { icon: string; color: string }> = {
+  payment_reminder: { icon: "bell-ring-outline", color: colors.warning },
+  payment_confirmed: { icon: "check-decagram-outline", color: colors.success },
+  new_expense: { icon: "file-document-outline", color: colors.primary },
+  announcement: { icon: "bullhorn-outline", color: colors.project },
+  project_update: { icon: "hammer-wrench", color: colors.elevator },
+  overdue: { icon: "alert-circle-outline", color: colors.danger },
 };
 
 function NotificationItem({
@@ -24,12 +34,19 @@ function NotificationItem({
   item: AppNotification;
   onPress: () => void;
 }) {
+  const config = typeConfig[item.type] || {
+    icon: "bell-outline",
+    color: colors.textSecondary,
+  };
   return (
     <TouchableOpacity
       style={[styles.item, !item.isRead && styles.itemUnread]}
       onPress={onPress}
+      activeOpacity={0.7}
     >
-      <Text style={styles.icon}>{typeIcons[item.type] || '📌'}</Text>
+      <View style={[styles.iconBg, { backgroundColor: config.color + "15" }]}>
+        <Icon name={config.icon} size={20} color={config.color} />
+      </View>
       <View style={styles.itemContent}>
         <Text style={[styles.itemTitle, !item.isRead && styles.itemTitleBold]}>
           {item.title}
@@ -47,17 +64,22 @@ function NotificationItem({
 export default function NotificationsScreen() {
   const queryClient = useQueryClient();
   const { data, isRefetching, refetch } = useQuery({
-    queryKey: ['notifications'],
-    queryFn: getNotifications,
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const res = await getNotifications();
+      return res.data ?? res;
+    },
   });
 
   const markRead = useMutation({
     mutationFn: markNotificationRead,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
   return (
     <View style={styles.container}>
+      <ScreenHeader title="Notifications" />
       <FlatList
         data={data || []}
         keyExtractor={(item) => item._id}
@@ -69,30 +91,67 @@ export default function NotificationsScreen() {
             }}
           />
         )}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+        }
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<Text style={styles.empty}>No notifications</Text>}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <EmptyState
+            icon="bell-check-outline"
+            title="All clear!"
+            subtitle="No notifications right now"
+          />
+        }
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
-  list: { padding: 16 },
+  container: { flex: 1, backgroundColor: colors.background },
+  list: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xxxl },
   item: {
-    flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#fff',
-    borderRadius: 12, padding: 16, marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.sm,
+    ...shadow.sm,
   },
-  itemUnread: { backgroundColor: '#eef2ff' },
-  icon: { fontSize: 22, marginRight: 12, marginTop: 2 },
+  itemUnread: {
+    backgroundColor: colors.primaryLight,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+  },
+  iconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.md,
+  },
   itemContent: { flex: 1 },
-  itemTitle: { fontSize: 14, color: '#1a1a2e' },
-  itemTitleBold: { fontWeight: '700' },
-  itemBody: { fontSize: 13, color: '#6c757d', marginTop: 4 },
-  itemTime: { fontSize: 11, color: '#adb5bd', marginTop: 6 },
-  unreadDot: {
-    width: 8, height: 8, borderRadius: 4, backgroundColor: '#4361ee', marginTop: 6,
+  itemTitle: { ...typography.body, color: colors.textPrimary },
+  itemTitleBold: { fontWeight: "700" },
+  itemBody: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
   },
-  empty: { textAlign: 'center', color: '#6c757d', marginTop: 40 },
+  itemTime: {
+    ...typography.small,
+    color: colors.textTertiary,
+    marginTop: spacing.sm,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+    marginTop: spacing.sm,
+    marginLeft: spacing.sm,
+  },
 });

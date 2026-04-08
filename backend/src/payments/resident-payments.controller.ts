@@ -1,41 +1,46 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, UseGuards, HttpCode } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PaymentsService } from './payments.service';
+import { InitiatePaymentDto } from './dto/create-payment.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller()
-@UseGuards(AuthGuard('jwt'))
 export class ResidentPaymentsController {
   constructor(private paymentsService: PaymentsService) {}
 
   @Get('me/payments')
-  getMyPayments(@CurrentUser('userId') userId: string) {
-    return this.paymentsService.getResidentPayments(userId);
-  }
-
-  @Post('payments/initiate')
-  initiatePayment(
-    @CurrentUser('buildingId') buildingId: string,
+  @UseGuards(AuthGuard('jwt'))
+  getMyPayments(
     @CurrentUser('userId') userId: string,
-    @Body()
-    body: {
-      unitId: string;
-      amount: number;
-      expenseShareIds: string[];
-    },
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.paymentsService.initiateOnlinePayment(
-      buildingId,
+    return this.paymentsService.getResidentPayments(
       userId,
-      body.unitId,
-      body.amount,
-      body.expenseShareIds,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
     );
   }
 
+  @Post('payments/initiate')
+  @UseGuards(AuthGuard('jwt'))
+  initiatePayment(
+    @CurrentUser('buildingId') buildingId: string,
+    @CurrentUser('userId') userId: string,
+    @Body() dto: InitiatePaymentDto,
+  ) {
+    return this.paymentsService.initiateOnlinePayment(buildingId, userId, dto);
+  }
+
+  /**
+   * Payment gateway server-to-server callback.
+   * NOT authenticated via JWT — uses gateway signature verification instead.
+   * Idempotent: safe to call multiple times for the same payment.
+   */
   @Post('payments/callback')
-  handleCallback(@Body() body: { orderId: string; [key: string]: string }) {
-    const { orderId, ...gatewayResponse } = body;
-    return this.paymentsService.handlePaymentCallback(orderId, gatewayResponse);
+  @HttpCode(200)
+  handleCallback(@Body() body: Record<string, string>) {
+    const orderId = body.oid || body.orderId || '';
+    return this.paymentsService.handlePaymentCallback(orderId, body);
   }
 }

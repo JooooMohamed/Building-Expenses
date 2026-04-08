@@ -44,4 +44,20 @@ export class UnitsService {
       isOccupied: true,
     } as Partial<Unit>);
   }
+
+  async unassignResident(unitId: string): Promise<UnitDocument> {
+    const unit = await this.unitModel.findByIdAndUpdate(
+      unitId,
+      { $set: { residentId: null, isOccupied: false } },
+      { new: true },
+    );
+    if (!unit) throw new NotFoundException('Unit not found');
+    return unit;
+  }
+
+  async findById(id: string): Promise<UnitDocument> {
+    const unit = await this.unitModel.findById(id).populate('residentId', 'firstName lastName email');
+    if (!unit) throw new NotFoundException('Unit not found');
+    return unit;
+  }
 }

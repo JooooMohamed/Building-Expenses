@@ -27,8 +27,10 @@ import {
   categoryColors,
 } from "../../theme";
 import type { ExpenseShare } from "../../types";
+import { useCurrency } from "../../hooks/useCurrency";
 
 function DueItem({ share }: { share: ExpenseShare }) {
+  const currency = useCurrency();
   const category = share.expenseId?.category || "fixed";
   return (
     <Card style={styles.dueItem}>
@@ -60,7 +62,7 @@ function DueItem({ share }: { share: ExpenseShare }) {
         </View>
         <View style={styles.dueRight}>
           <Text style={styles.dueAmount}>
-            {share.amount.toLocaleString()} TRY
+            {share.amount.toLocaleString()} {currency}
           </Text>
           <StatusBadge status={share.status} />
         </View>
@@ -70,6 +72,7 @@ function DueItem({ share }: { share: ExpenseShare }) {
 }
 
 export default function DashboardScreen() {
+  const currency = useCurrency();
   const user = useAuthStore((s) => s.user);
   const navigation = useNavigation<any>();
 
@@ -146,7 +149,7 @@ export default function DashboardScreen() {
         <Text style={styles.balanceAmount}>
           {isLoading
             ? "..."
-            : `${(summary?.remainingBalance || 0).toLocaleString()} TRY`}
+            : `${(summary?.remainingBalance || 0).toLocaleString()} ${currency}`}
         </Text>
         <View style={styles.balanceRow}>
           <View style={styles.balanceStat}>

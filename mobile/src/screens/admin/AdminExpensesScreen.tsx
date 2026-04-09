@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -7,19 +7,19 @@ import {
   RefreshControl,
   TouchableOpacity,
   FlatList,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
-import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import dayjs from 'dayjs';
-import { getExpenses } from '../../api/admin';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigation } from "@react-navigation/native";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import dayjs from "dayjs";
+import { getExpenses } from "../../api/admin";
 import {
   Card,
   StatusBadge,
   ScreenHeader,
   EmptyState,
-} from '../../components/ui';
+} from "../../components/ui";
 import {
   colors,
   spacing,
@@ -29,40 +29,46 @@ import {
   categoryColors,
   categoryLabels,
   categoryIcons,
-} from '../../theme';
-import type { Expense } from '../../types';
+} from "../../theme";
+import type { Expense } from "../../types";
+import { useCurrency } from "../../hooks/useCurrency";
 
 const CATEGORIES = [
-  { key: 'all', label: 'All' },
-  { key: 'fixed', label: 'Fixed' },
-  { key: 'maintenance', label: 'Maintenance' },
-  { key: 'elevator', label: 'Elevator' },
-  { key: 'project', label: 'Project' },
-  { key: 'emergency', label: 'Emergency' },
+  { key: "all", label: "All" },
+  { key: "fixed", label: "Fixed" },
+  { key: "maintenance", label: "Maintenance" },
+  { key: "elevator", label: "Elevator" },
+  { key: "project", label: "Project" },
+  { key: "emergency", label: "Emergency" },
 ];
 
 const STATUS_TABS = [
-  { key: 'active', label: 'Active' },
-  { key: 'cancelled', label: 'Cancelled' },
+  { key: "active", label: "Active" },
+  { key: "cancelled", label: "Cancelled" },
 ];
 
 function ExpenseItem({ expense }: { expense: Expense }) {
   const catColor = categoryColors[expense.category] || colors.textTertiary;
-  const catIcon = categoryIcons[expense.category] || 'help-circle-outline';
+  const catIcon = categoryIcons[expense.category] || "help-circle-outline";
   const catLabel = categoryLabels[expense.category] || expense.category;
 
   return (
     <Card style={styles.expenseCard}>
       <View style={styles.expenseRow}>
         <View
-          style={[styles.expenseIconBg, { backgroundColor: catColor + '15' }]}
+          style={[styles.expenseIconBg, { backgroundColor: catColor + "15" }]}
         >
           <Icon name={catIcon} size={20} color={catColor} />
         </View>
         <View style={styles.expenseInfo}>
           <Text style={styles.expenseTitle}>{expense.title}</Text>
           <View style={styles.expenseMeta}>
-            <View style={[styles.categoryBadge, { backgroundColor: catColor + '15' }]}>
+            <View
+              style={[
+                styles.categoryBadge,
+                { backgroundColor: catColor + "15" },
+              ]}
+            >
               <Text style={[styles.categoryBadgeText, { color: catColor }]}>
                 {catLabel}
               </Text>
@@ -75,7 +81,7 @@ function ExpenseItem({ expense }: { expense: Expense }) {
             )}
           </View>
           <Text style={styles.expenseDate}>
-            {dayjs(expense.date).format('MMM D, YYYY')}
+            {dayjs(expense.date).format("MMM D, YYYY")}
           </Text>
         </View>
         <View style={styles.expenseRight}>
@@ -88,12 +94,12 @@ function ExpenseItem({ expense }: { expense: Expense }) {
               active: {
                 color: colors.success,
                 bg: colors.successLight,
-                label: 'Active',
+                label: "Active",
               },
               cancelled: {
                 color: colors.textSecondary,
                 bg: colors.surfaceSecondary,
-                label: 'Cancelled',
+                label: "Cancelled",
               },
             }}
           />
@@ -104,12 +110,15 @@ function ExpenseItem({ expense }: { expense: Expense }) {
 }
 
 export default function AdminExpensesScreen() {
+  const currency = useCurrency();
   const navigation = useNavigation<any>();
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState<'active' | 'cancelled'>('active');
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState<"active" | "cancelled">(
+    "active",
+  );
 
   const expensesQuery = useQuery({
-    queryKey: ['admin-expenses'],
+    queryKey: ["admin-expenses"],
     queryFn: () => getExpenses(),
   });
 
@@ -118,7 +127,7 @@ export default function AdminExpensesScreen() {
   const filteredExpenses = useMemo(() => {
     return expenses.filter((e) => {
       const matchesCategory =
-        selectedCategory === 'all' || e.category === selectedCategory;
+        selectedCategory === "all" || e.category === selectedCategory;
       const matchesStatus = e.status === selectedStatus;
       return matchesCategory && matchesStatus;
     });
@@ -130,10 +139,10 @@ export default function AdminExpensesScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <ScreenHeader
         title="Expenses"
-        subtitle={`${filteredExpenses.length} expenses - ${totalAmount.toLocaleString()} TRY total`}
+        subtitle={`${filteredExpenses.length} expenses - ${totalAmount.toLocaleString()} ${currency} total`}
       />
 
       {/* Status Toggle */}
@@ -145,7 +154,7 @@ export default function AdminExpensesScreen() {
               styles.statusTab,
               selectedStatus === tab.key && styles.statusTabActive,
             ]}
-            onPress={() => setSelectedStatus(tab.key as 'active' | 'cancelled')}
+            onPress={() => setSelectedStatus(tab.key as "active" | "cancelled")}
           >
             <Text
               style={[
@@ -169,7 +178,7 @@ export default function AdminExpensesScreen() {
         {CATEGORIES.map((cat) => {
           const isActive = selectedCategory === cat.key;
           const chipColor =
-            cat.key === 'all'
+            cat.key === "all"
               ? colors.primary
               : categoryColors[cat.key] || colors.primary;
           return (
@@ -213,7 +222,7 @@ export default function AdminExpensesScreen() {
             icon="receipt"
             title="No expenses found"
             subtitle={
-              selectedCategory === 'all'
+              selectedCategory === "all"
                 ? `No ${selectedStatus} expenses`
                 : `No ${selectedStatus} ${selectedCategory} expenses`
             }
@@ -229,7 +238,7 @@ export default function AdminExpensesScreen() {
       <TouchableOpacity
         style={styles.fab}
         activeOpacity={0.85}
-        onPress={() => navigation.navigate('CreateExpense')}
+        onPress={() => navigation.navigate("CreateExpense")}
       >
         <Icon name="plus" size={28} color={colors.white} />
       </TouchableOpacity>
@@ -243,7 +252,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   statusToggleContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginHorizontal: spacing.xl,
     marginTop: spacing.sm,
     backgroundColor: colors.surfaceSecondary,
@@ -254,7 +263,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: spacing.sm,
     borderRadius: radius.sm,
-    alignItems: 'center',
+    alignItems: "center",
   },
   statusTabActive: {
     backgroundColor: colors.surface,
@@ -296,15 +305,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   expenseRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   expenseIconBg: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: spacing.md,
   },
   expenseInfo: {
@@ -315,8 +324,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   expenseMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
     marginTop: 4,
   },
@@ -329,8 +338,8 @@ const styles = StyleSheet.create({
     ...typography.smallBold,
   },
   recurringBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 2,
     backgroundColor: colors.infoLight,
     paddingHorizontal: spacing.sm,
@@ -347,7 +356,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   expenseRight: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
     marginLeft: spacing.sm,
   },
   expenseAmount: {
@@ -356,15 +365,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   fab: {
-    position: 'absolute',
+    position: "absolute",
     bottom: spacing.xxl,
     right: spacing.xl,
     width: 56,
     height: 56,
     borderRadius: 28,
     backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     ...shadow.lg,
   },
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -7,25 +7,26 @@ import {
   RefreshControl,
   TouchableOpacity,
   ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import dayjs from 'dayjs';
-import { useAuthStore } from '../../store/auth';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigation } from "@react-navigation/native";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import dayjs from "dayjs";
+import { useAuthStore } from "../../store/auth";
 import {
   getBuilding,
   getResidents,
   getMonthlyReport,
   getOverdueCharges,
-} from '../../api/admin';
+  getPeriodCharges,
+} from "../../api/admin";
 import {
   Card,
   StatusBadge,
   SectionHeader,
   EmptyState,
-} from '../../components/ui';
+} from "../../components/ui";
 import {
   colors,
   spacing,
@@ -33,8 +34,13 @@ import {
   typography,
   shadow,
   statusConfig,
-} from '../../theme';
-import type { Building, User, MonthlyReport, ResidentCharge } from '../../types';
+} from "../../theme";
+import type {
+  Building,
+  User,
+  MonthlyReport,
+  ResidentCharge,
+} from "../../types";
 
 function StatCard({
   icon,
@@ -49,7 +55,7 @@ function StatCard({
 }) {
   return (
     <View style={styles.statCard}>
-      <View style={[styles.statIconBg, { backgroundColor: color + '12' }]}>
+      <View style={[styles.statIconBg, { backgroundColor: color + "12" }]}>
         <Icon name={icon} size={20} color={color} />
       </View>
       <Text style={styles.statValue}>{value}</Text>
@@ -58,7 +64,7 @@ function StatCard({
   );
 }
 
-function OverdueItem({ charge }: { charge: ResidentCharge }) {
+function OverdueItem({ charge, currency }: { charge: ResidentCharge; currency: string }) {
   const remaining = charge.amount - charge.paidAmount;
   return (
     <Card style={styles.overdueItem}>
@@ -71,13 +77,13 @@ function OverdueItem({ charge }: { charge: ResidentCharge }) {
             {charge.residentId.firstName} {charge.residentId.lastName}
           </Text>
           <Text style={styles.overdueUnit}>
-            Unit {charge.unitId.unitNumber} - Due{' '}
-            {dayjs(charge.dueDate).format('MMM D')}
+            Unit {charge.unitId.unitNumber} - Due{" "}
+            {dayjs(charge.dueDate).format("MMM D")}
           </Text>
         </View>
         <View style={styles.overdueRight}>
           <Text style={styles.overdueAmount}>
-            {remaining.toLocaleString()} TRY
+            {remaining.toLocaleString()} {currency}
           </Text>
           <StatusBadge status={charge.status} />
         </View>
@@ -89,33 +95,40 @@ function OverdueItem({ charge }: { charge: ResidentCharge }) {
 export default function AdminDashboardScreen() {
   const user = useAuthStore((s) => s.user);
   const navigation = useNavigation<any>();
-  const currentMonth = dayjs().format('YYYY-MM');
+  const currentMonth = dayjs().format("YYYY-MM");
 
   const buildingQuery = useQuery({
-    queryKey: ['admin-building'],
+    queryKey: ["admin-building"],
     queryFn: getBuilding,
   });
 
   const residentsQuery = useQuery({
-    queryKey: ['admin-residents'],
+    queryKey: ["admin-residents"],
     queryFn: getResidents,
   });
 
   const reportQuery = useQuery({
-    queryKey: ['admin-monthly-report', currentMonth],
+    queryKey: ["admin-monthly-report", currentMonth],
     queryFn: () => getMonthlyReport(currentMonth),
   });
 
   const overdueQuery = useQuery({
-    queryKey: ['admin-overdue'],
+    queryKey: ["admin-overdue"],
     queryFn: getOverdueCharges,
+  });
+
+  // Use billing system charges for accurate collected/outstanding data
+  const periodChargesQuery = useQuery({
+    queryKey: ["admin-period-charges", currentMonth],
+    queryFn: () => getPeriodCharges(currentMonth),
   });
 
   const isRefetching =
     buildingQuery.isRefetching ||
     residentsQuery.isRefetching ||
     reportQuery.isRefetching ||
-    overdueQuery.isRefetching;
+    overdueQuery.isRefetching ||
+    periodChargesQuery.isRefetching;
 
   const isLoading =
     buildingQuery.isLoading ||
@@ -127,51 +140,59 @@ export default function AdminDashboardScreen() {
     residentsQuery.refetch();
     reportQuery.refetch();
     overdueQuery.refetch();
+    periodChargesQuery.refetch();
   };
 
   const building = buildingQuery.data;
+  const currency = building?.currency || "TRY";
   const residents = residentsQuery.data || [];
   const report = reportQuery.data;
   const overdueCharges = overdueQuery.data || [];
+  const periodSummary = periodChargesQuery.data?.summary;
 
   const totalResidents = residents.length;
-  const occupiedUnits = residents.filter((r) => r.unitIds && r.unitIds.length > 0).length;
-  const totalCollected = report?.collections?.collected || 0;
-  const outstanding = report?.outstanding?.total || 0;
+  const occupiedUnits = residents.filter(
+    (r) => r.unitIds && r.unitIds.length > 0,
+  ).length;
+  // Prefer billing system data when available, fall back to report
+  const totalCollected = periodSummary?.totalPaid ?? report?.collections?.collected ?? 0;
+  const outstanding = periodSummary
+    ? periodSummary.totalAmount - periodSummary.totalPaid
+    : report?.outstanding?.total ?? 0;
 
   const hour = new Date().getHours();
   const greeting =
-    hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   const quickActions = [
     {
-      icon: 'plus-circle-outline',
-      label: 'Add Expense',
+      icon: "plus-circle-outline",
+      label: "Add Expense",
       color: colors.primary,
-      screen: 'CreateExpense',
+      screen: "CreateExpense",
     },
     {
-      icon: 'cash-plus',
-      label: 'Record\nPayment',
+      icon: "cash-plus",
+      label: "Record\nPayment",
       color: colors.success,
-      screen: 'CashPayment',
+      screen: "CashPayment",
     },
     {
-      icon: 'bullhorn-outline',
-      label: 'Send\nAnnouncement',
-      color: colors.warning,
-      screen: 'ComposeAnnouncement',
-    },
-    {
-      icon: 'chart-line',
-      label: 'View\nReports',
+      icon: "receipt",
+      label: "Generate\nBilling",
       color: colors.elevator,
-      screen: 'Reports',
+      screen: "Billing",
+    },
+    {
+      icon: "bullhorn-outline",
+      label: "Send\nAnnouncement",
+      color: colors.warning,
+      screen: "ComposeAnnouncement",
     },
   ];
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
@@ -185,12 +206,12 @@ export default function AdminDashboardScreen() {
           <View>
             <Text style={styles.greetingLabel}>{greeting}</Text>
             <Text style={styles.greetingName}>
-              {user?.firstName || 'Admin'}
+              {user?.firstName || "Admin"}
             </Text>
           </View>
           <TouchableOpacity
             style={styles.profileButton}
-            onPress={() => navigation.navigate('Profile')}
+            onPress={() => navigation.navigate("Profile")}
           >
             <Icon
               name="account-circle-outline"
@@ -222,13 +243,13 @@ export default function AdminDashboardScreen() {
           <StatCard
             icon="account-group-outline"
             label="Residents"
-            value={isLoading ? '...' : String(totalResidents)}
+            value={isLoading ? "..." : String(totalResidents)}
             color={colors.primary}
           />
           <StatCard
             icon="home-city-outline"
             label="Occupied"
-            value={isLoading ? '...' : String(occupiedUnits)}
+            value={isLoading ? "..." : String(occupiedUnits)}
             color={colors.success}
           />
         </View>
@@ -236,21 +257,13 @@ export default function AdminDashboardScreen() {
           <StatCard
             icon="cash-check"
             label="Collected"
-            value={
-              isLoading
-                ? '...'
-                : `${totalCollected.toLocaleString()}`
-            }
+            value={isLoading ? "..." : `${totalCollected.toLocaleString()}`}
             color={colors.success}
           />
           <StatCard
             icon="cash-clock"
             label="Outstanding"
-            value={
-              isLoading
-                ? '...'
-                : `${outstanding.toLocaleString()}`
-            }
+            value={isLoading ? "..." : `${outstanding.toLocaleString()}`}
             color={colors.danger}
           />
         </View>
@@ -269,7 +282,7 @@ export default function AdminDashboardScreen() {
                 <View
                   style={[
                     styles.actionIconBg,
-                    { backgroundColor: action.color + '12' },
+                    { backgroundColor: action.color + "12" },
                   ]}
                 >
                   <Icon name={action.icon} size={22} color={action.color} />
@@ -305,22 +318,22 @@ export default function AdminDashboardScreen() {
               subtitle="All residents are up to date"
             />
           ) : (
-            overdueCharges.slice(0, 5).map((charge) => (
-              <OverdueItem key={charge._id} charge={charge} />
-            ))
+            overdueCharges
+              .slice(0, 5)
+              .map((charge) => <OverdueItem key={charge._id} charge={charge} currency={currency} />)
           )}
         </View>
 
         {/* Month Summary */}
         {report && (
           <View style={styles.section}>
-            <SectionHeader title={`${dayjs().format('MMMM')} Summary`} />
+            <SectionHeader title={`${dayjs().format("MMMM")} Summary`} />
             <Card style={styles.summaryCard} variant="elevated">
               <View style={styles.summaryRow}>
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryItemLabel}>Total Expenses</Text>
                   <Text style={styles.summaryItemValue}>
-                    {(report.expenses?.total || 0).toLocaleString()} TRY
+                    {(report.expenses?.total || 0).toLocaleString()} {currency}
                   </Text>
                 </View>
                 <View style={styles.summaryDivider} />
@@ -334,8 +347,8 @@ export default function AdminDashboardScreen() {
                           (report.collections?.collectionRate || 0) >= 80
                             ? colors.success
                             : (report.collections?.collectionRate || 0) >= 50
-                            ? colors.warning
-                            : colors.danger,
+                              ? colors.warning
+                              : colors.danger,
                       },
                     ]}
                   >
@@ -364,9 +377,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxxl,
   },
   greeting: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
     paddingBottom: spacing.sm,
@@ -385,24 +398,24 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     backgroundColor: colors.surfaceSecondary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   buildingCard: {
     marginHorizontal: spacing.xl,
     marginTop: spacing.lg,
   },
   buildingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   buildingIconBg: {
     width: 48,
     height: 48,
     borderRadius: 24,
     backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: spacing.md,
   },
   buildingInfo: {
@@ -418,7 +431,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   statsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: spacing.xl,
     marginTop: spacing.sm,
     gap: spacing.sm,
@@ -428,15 +441,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
-    alignItems: 'center',
+    alignItems: "center",
     ...shadow.sm,
   },
   statIconBg: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: spacing.sm,
   },
   statValue: {
@@ -453,7 +466,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   actionsGrid: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
   },
   actionButton: {
@@ -462,21 +475,21 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.sm,
-    alignItems: 'center',
+    alignItems: "center",
     ...shadow.sm,
   },
   actionIconBg: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: spacing.sm,
   },
   actionLabel: {
     ...typography.captionBold,
     color: colors.textPrimary,
-    textAlign: 'center',
+    textAlign: "center",
   },
   countBadge: {
     backgroundColor: colors.danger,
@@ -484,7 +497,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     minWidth: 24,
-    alignItems: 'center',
+    alignItems: "center",
   },
   countBadgeText: {
     ...typography.smallBold,
@@ -494,16 +507,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   overdueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   overdueAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: colors.dangerLight,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: spacing.md,
   },
   overdueInfo: {
@@ -519,7 +532,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   overdueRight: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   overdueAmount: {
     ...typography.bodyBold,
@@ -528,18 +541,18 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     paddingVertical: spacing.xxxl,
-    alignItems: 'center',
+    alignItems: "center",
   },
   summaryCard: {
     marginBottom: spacing.sm,
   },
   summaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   summaryItem: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   summaryItemLabel: {
     ...typography.caption,

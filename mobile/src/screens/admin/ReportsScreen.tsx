@@ -31,14 +31,27 @@ import {
 } from "../../theme";
 import dayjs from "dayjs";
 import type { MonthlyReport, CollectionStatus } from "../../types";
+import { useCurrency } from "../../hooks/useCurrency";
 
-const methodConfig: Record<string, { icon: string; label: string; color: string }> = {
+const methodConfig: Record<
+  string,
+  { icon: string; label: string; color: string }
+> = {
   cash: { icon: "cash", label: "Cash", color: colors.success },
-  online: { icon: "credit-card-outline", label: "Online", color: colors.primary },
-  bank_transfer: { icon: "bank-outline", label: "Bank Transfer", color: colors.elevator },
+  online: {
+    icon: "credit-card-outline",
+    label: "Online",
+    color: colors.primary,
+  },
+  bank_transfer: {
+    icon: "bank-outline",
+    label: "Bank Transfer",
+    color: colors.elevator,
+  },
 };
 
 export default function ReportsScreen() {
+  const currency = useCurrency();
   const [periodOffset, setPeriodOffset] = useState(0);
   const month = dayjs().subtract(periodOffset, "month").format("YYYY-MM");
   const displayMonth = dayjs()
@@ -205,7 +218,8 @@ export default function ReportsScreen() {
               </View>
               <Text style={styles.rateBarLabel}>
                 {report.collections.collected.toLocaleString()} of{" "}
-                {report.collections.expected.toLocaleString()} TRY collected
+                {report.collections.expected.toLocaleString()} {currency}{" "}
+                collected
               </Text>
             </View>
 
@@ -254,7 +268,7 @@ export default function ReportsScreen() {
                         </View>
                         <View style={styles.breakdownRight}>
                           <Text style={styles.breakdownAmount}>
-                            {amount.toLocaleString()} TRY
+                            {amount.toLocaleString()} {currency}
                           </Text>
                           <Text style={[styles.breakdownPct, { color }]}>
                             {pct.toFixed(1)}%
@@ -284,8 +298,7 @@ export default function ReportsScreen() {
                       label: method,
                       color: colors.textTertiary,
                     };
-                    const totalCollected =
-                      report.collections.collected || 1;
+                    const totalCollected = report.collections.collected || 1;
                     const pct = (amount / totalCollected) * 100;
                     return (
                       <View key={method}>
@@ -321,7 +334,7 @@ export default function ReportsScreen() {
                           </View>
                           <View style={styles.methodRight}>
                             <Text style={styles.methodAmount}>
-                              {amount.toLocaleString()} TRY
+                              {amount.toLocaleString()} {currency}
                             </Text>
                             <Text
                               style={[
@@ -387,11 +400,7 @@ export default function ReportsScreen() {
                       { backgroundColor: colors.dangerLight },
                     ]}
                   >
-                    <Icon
-                      name="close-circle"
-                      size={16}
-                      color={colors.danger}
-                    />
+                    <Icon name="close-circle" size={16} color={colors.danger} />
                     <Text
                       style={[styles.statusPillText, { color: colors.danger }]}
                     >
@@ -409,10 +418,7 @@ export default function ReportsScreen() {
                   />
                 ) : (
                   collection.residents.map((resident) => (
-                    <Card
-                      key={resident.residentId}
-                      style={styles.residentCard}
-                    >
+                    <Card key={resident.residentId} style={styles.residentCard}>
                       <View style={styles.residentRow}>
                         <View style={styles.residentAvatar}>
                           <Text style={styles.residentAvatarText}>
@@ -431,7 +437,7 @@ export default function ReportsScreen() {
                             Unit {resident.unit}
                             {" \u2022 "}
                             {resident.totalPaid.toLocaleString()} /{" "}
-                            {resident.totalDue.toLocaleString()} TRY
+                            {resident.totalDue.toLocaleString()} {currency}
                           </Text>
                         </View>
                         <StatusBadge status={resident.status} />

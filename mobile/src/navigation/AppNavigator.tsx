@@ -28,6 +28,7 @@ import CreateExpenseScreen from "../screens/admin/CreateExpenseScreen";
 import CashPaymentScreen from "../screens/admin/CashPaymentScreen";
 import ReportsScreen from "../screens/admin/ReportsScreen";
 import AnnouncementComposerScreen from "../screens/admin/AnnouncementComposerScreen";
+import BillingScreen from "../screens/admin/BillingScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -234,7 +235,18 @@ export default function AppNavigator() {
             <Stack.Screen
               name="ResidentDetail"
               component={ResidentDetailScreen}
-              options={{ ...modalHeaderOptions, headerTitle: "Resident Details" }}
+              options={{
+                ...modalHeaderOptions,
+                headerTitle: "Resident Details",
+              }}
+            />
+            <Stack.Screen
+              name="Billing"
+              component={BillingScreen}
+              options={{
+                ...modalHeaderOptions,
+                headerTitle: "Monthly Billing",
+              }}
             />
           </>
         )}

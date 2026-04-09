@@ -11,6 +11,7 @@ import {
   Modal,
   FlatList,
   SafeAreaView,
+  RefreshControl,
 } from "react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -19,6 +20,7 @@ import {
   getResidentUnpaidCharges,
   recordCashPayment,
 } from "../../api/admin";
+import { useCurrency } from "../../hooks/useCurrency";
 import { Card, ScreenHeader, EmptyState } from "../../components/ui";
 import { colors, spacing, radius, typography, shadow } from "../../theme";
 import dayjs from "dayjs";
@@ -26,15 +28,14 @@ import type { User, ResidentCharge } from "../../types";
 
 export default function CashPaymentScreen() {
   const queryClient = useQueryClient();
+  const currency = useCurrency();
 
   // ── Form state ────────────────────────────────
   const [selectedResident, setSelectedResident] = useState<User | null>(null);
   const [residentPickerOpen, setResidentPickerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [amount, setAmount] = useState("");
-  const [paymentDate, setPaymentDate] = useState(
-    dayjs().format("YYYY-MM-DD"),
-  );
+  const [paymentDate, setPaymentDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [notes, setNotes] = useState("");
   const [selectedShareIds, setSelectedShareIds] = useState<Set<string>>(
     new Set(),
@@ -143,13 +144,14 @@ export default function CashPaymentScreen() {
     const residentName = `${selectedResident!.firstName} ${selectedResident!.lastName}`;
     const parsedAmount = parseFloat(amount);
 
-    const chargeCount = selectedShareIds.size > 0
-      ? `${selectedShareIds.size} charge(s) selected.`
-      : "Payment will auto-allocate to oldest unpaid charges.";
+    const chargeCount =
+      selectedShareIds.size > 0
+        ? `${selectedShareIds.size} charge(s) selected.`
+        : "Payment will auto-allocate to oldest unpaid charges.";
 
     Alert.alert(
       "Confirm Cash Payment",
-      `Record ${parsedAmount.toLocaleString()} TRY from ${residentName}?\n\n${chargeCount}\nDate: ${paymentDate}`,
+      `Record ${parsedAmount.toLocaleString()} ${currency} from ${residentName}?\n\n${chargeCount}\nDate: ${paymentDate}`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -213,7 +215,7 @@ export default function CashPaymentScreen() {
             <View style={styles.receiptRow}>
               <Text style={styles.receiptLabel}>Amount</Text>
               <Text style={styles.receiptValue}>
-                {parseFloat(amount).toLocaleString()} TRY
+                {parseFloat(amount).toLocaleString()} {currency}
               </Text>
             </View>
             <View style={styles.receiptDivider} />
@@ -246,6 +248,19 @@ export default function CashPaymentScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            refreshing={false}
+            onRefresh={() => {
+              queryClient.invalidateQueries({ queryKey: ["admin-residents"] });
+              if (selectedResident) {
+                queryClient.invalidateQueries({
+                  queryKey: ["admin-resident-unpaid", selectedResident.id],
+                });
+              }
+            }}
+          />
+        }
       >
         <ScreenHeader
           title="Record Cash Payment"
@@ -289,11 +304,7 @@ export default function CashPaymentScreen() {
                 </Text>
               </View>
             )}
-            <Icon
-              name="chevron-down"
-              size={20}
-              color={colors.textSecondary}
-            />
+            <Icon name="chevron-down" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -368,7 +379,7 @@ export default function CashPaymentScreen() {
                     </View>
                     <View style={styles.chargeAmountCol}>
                       <Text style={styles.chargeAmount}>
-                        {remaining.toLocaleString()} TRY
+                        {remaining.toLocaleString()} {currency}
                       </Text>
                       {charge.paidAmount > 0 && (
                         <Text style={styles.chargePaidNote}>
@@ -388,7 +399,7 @@ export default function CashPaymentScreen() {
                 </Text>
                 <TouchableOpacity onPress={handleAutoFillAmount}>
                   <Text style={styles.autoFillText}>
-                    Auto-fill {selectedTotal.toLocaleString()} TRY
+                    Auto-fill {selectedTotal.toLocaleString()} {currency}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -398,10 +409,10 @@ export default function CashPaymentScreen() {
 
         {/* Amount */}
         <View style={styles.section}>
-          <Text style={styles.label}>Amount (TRY) *</Text>
+          <Text style={styles.label}>Amount ({currency}) *</Text>
           <View style={styles.inputRow}>
             <View style={styles.currencyTag}>
-              <Text style={styles.currencyText}>TRY</Text>
+              <Text style={styles.currencyText}>{currency}</Text>
             </View>
             <TextInput
               style={styles.amountInput}

@@ -27,8 +27,10 @@ import {
   categoryIcons,
 } from "../../theme";
 import dayjs from "dayjs";
+import { useCurrency } from "../../hooks/useCurrency";
 
 export default function ExpensesScreen() {
+  const currency = useCurrency();
   const [periodOffset, setPeriodOffset] = useState(0);
   const period = dayjs().subtract(periodOffset, "month").format("YYYY-MM");
   const displayPeriod = dayjs()
@@ -87,7 +89,9 @@ export default function ExpensesScreen() {
           <Icon name="chart-arc" size={24} color="rgba(255,255,255,0.8)" />
           <Text style={styles.totalLabel}>Total Building Expenses</Text>
         </View>
-        <Text style={styles.totalAmount}>{total.toLocaleString()} TRY</Text>
+        <Text style={styles.totalAmount}>
+          {total.toLocaleString()} {currency}
+        </Text>
       </View>
 
       <View style={styles.section}>
@@ -132,7 +136,7 @@ export default function ExpensesScreen() {
                   </View>
                   <View style={styles.categoryRight}>
                     <Text style={styles.categoryAmount}>
-                      {item.total.toLocaleString()} TRY
+                      {item.total.toLocaleString()} {currency}
                     </Text>
                     <Text style={[styles.categoryPct, { color }]}>
                       {pct.toFixed(1)}%

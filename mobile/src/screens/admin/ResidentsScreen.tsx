@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useTranslation } from 'react-i18next';
 import { getResidents, getUnits } from '../../api/admin';
 import {
   Card,
@@ -113,6 +114,7 @@ function ResidentCard({
 
 export default function ResidentsScreen() {
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   const residentsQuery = useQuery({
@@ -163,8 +165,8 @@ export default function ResidentsScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.headerRow}>
         <ScreenHeader
-          title="Residents"
-          subtitle={`${residents.length} total residents`}
+          title={t("residents.title")}
+          subtitle={t("residents.totalResidents", { count: residents.length })}
         />
         <TouchableOpacity
           style={styles.addButton}
@@ -184,7 +186,7 @@ export default function ResidentsScreen() {
           />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search residents..."
+            placeholder={t("residents.searchPlaceholder")}
             placeholderTextColor={colors.textTertiary}
             value={search}
             onChangeText={setSearch}
@@ -215,11 +217,11 @@ export default function ResidentsScreen() {
         {filteredResidents.length === 0 ? (
           <EmptyState
             icon="account-search-outline"
-            title={search ? 'No results' : 'No residents yet'}
+            title={search ? t("residents.noResults") : t("residents.noResidents")}
             subtitle={
               search
                 ? `No residents matching "${search}"`
-                : 'Add your first resident to get started'
+                : t("residents.addResident")
             }
           />
         ) : (

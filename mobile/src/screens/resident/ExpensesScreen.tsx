@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useTranslation } from "react-i18next";
 import { getBuildingExpenses } from "../../api/resident";
 import {
   Card,
@@ -31,6 +32,7 @@ import { useCurrency } from "../../hooks/useCurrency";
 
 export default function ExpensesScreen() {
   const currency = useCurrency();
+  const { t } = useTranslation();
   const [periodOffset, setPeriodOffset] = useState(0);
   const period = dayjs().subtract(periodOffset, "month").format("YYYY-MM");
   const displayPeriod = dayjs()
@@ -53,7 +55,7 @@ export default function ExpensesScreen() {
       }
       showsVerticalScrollIndicator={false}
     >
-      <ScreenHeader title="Building Expenses" />
+      <ScreenHeader title={t("expenses.buildingExpenses")} />
 
       <View style={styles.periodSelector}>
         <TouchableOpacity
@@ -87,7 +89,7 @@ export default function ExpensesScreen() {
       <View style={styles.totalCard}>
         <View style={styles.totalTop}>
           <Icon name="chart-arc" size={24} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.totalLabel}>Total Building Expenses</Text>
+          <Text style={styles.totalLabel}>{t("expenses.totalBuildingExpenses")}</Text>
         </View>
         <Text style={styles.totalAmount}>
           {total.toLocaleString()} {currency}
@@ -95,12 +97,12 @@ export default function ExpensesScreen() {
       </View>
 
       <View style={styles.section}>
-        <SectionHeader title="Breakdown by Category" />
+        <SectionHeader title={t("expenses.breakdown")} />
         {!data || data.length === 0 ? (
           <EmptyState
             icon="chart-bar"
-            title="No expenses"
-            subtitle={`No expenses recorded for ${displayPeriod}`}
+            title={t("expenses.noExpenses")}
+            subtitle={t("expenses.noExpensesForPeriod", { period: displayPeriod })}
           />
         ) : (
           data.map((item) => {
@@ -149,10 +151,7 @@ export default function ExpensesScreen() {
         )}
       </View>
 
-      <Text style={styles.disclaimer}>
-        These are aggregated building expenses. Individual shares may vary based
-        on unit size.
-      </Text>
+      <Text style={styles.disclaimer}>{t("expenses.disclaimer")}</Text>
     </ScrollView>
   );
 }

@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useTranslation } from "react-i18next";
 import {
   getResidents,
   getResidentUnpaidCharges,
@@ -29,6 +30,7 @@ import type { User, ResidentCharge } from "../../types";
 export default function CashPaymentScreen() {
   const queryClient = useQueryClient();
   const currency = useCurrency();
+  const { t } = useTranslation();
 
   // ── Form state ────────────────────────────────
   const [selectedResident, setSelectedResident] = useState<User | null>(null);
@@ -125,12 +127,12 @@ export default function CashPaymentScreen() {
   }
 
   function validate(): string | null {
-    if (!selectedResident) return "Please select a resident.";
+    if (!selectedResident) return t("cashPayment.errorNoResident");
     const parsedAmount = parseFloat(amount);
     if (!amount || isNaN(parsedAmount) || parsedAmount <= 0)
-      return "Please enter a valid amount.";
+      return t("cashPayment.errorInvalidAmount");
     if (!paymentDate || !/^\d{4}-\d{2}-\d{2}$/.test(paymentDate))
-      return "Please enter a valid date (YYYY-MM-DD).";
+      return t("cashPayment.errorInvalidAmount");
     return null;
   }
 
@@ -194,33 +196,33 @@ export default function CashPaymentScreen() {
           <View style={styles.successIconBg}>
             <Icon name="check-circle" size={64} color={colors.success} />
           </View>
-          <Text style={styles.successTitle}>Payment Recorded</Text>
+          <Text style={styles.successTitle}>{t("cashPayment.paymentRecorded")}</Text>
           <Text style={styles.successSubtitle}>
-            The cash payment has been successfully recorded.
+            {t("cashPayment.success")}
           </Text>
 
           <Card style={styles.receiptCard}>
             <View style={styles.receiptRow}>
-              <Text style={styles.receiptLabel}>Receipt / ID</Text>
+              <Text style={styles.receiptLabel}>{t("cashPayment.receiptNumber")}</Text>
               <Text style={styles.receiptValue}>{receiptNumber}</Text>
             </View>
             <View style={styles.receiptDivider} />
             <View style={styles.receiptRow}>
-              <Text style={styles.receiptLabel}>Resident</Text>
+              <Text style={styles.receiptLabel}>{t("cashPayment.resident")}</Text>
               <Text style={styles.receiptValue}>
                 {selectedResident?.firstName} {selectedResident?.lastName}
               </Text>
             </View>
             <View style={styles.receiptDivider} />
             <View style={styles.receiptRow}>
-              <Text style={styles.receiptLabel}>Amount</Text>
+              <Text style={styles.receiptLabel}>{t("cashPayment.amount")}</Text>
               <Text style={styles.receiptValue}>
                 {parseFloat(amount).toLocaleString()} {currency}
               </Text>
             </View>
             <View style={styles.receiptDivider} />
             <View style={styles.receiptRow}>
-              <Text style={styles.receiptLabel}>Date</Text>
+              <Text style={styles.receiptLabel}>{t("cashPayment.date")}</Text>
               <Text style={styles.receiptValue}>
                 {dayjs(paymentDate).format("MMM D, YYYY")}
               </Text>
@@ -233,7 +235,7 @@ export default function CashPaymentScreen() {
             activeOpacity={0.8}
           >
             <Icon name="plus" size={20} color={colors.white} />
-            <Text style={styles.submitText}>Record Another Payment</Text>
+            <Text style={styles.submitText}>{t("cashPayment.recordAnother")}</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -263,13 +265,13 @@ export default function CashPaymentScreen() {
         }
       >
         <ScreenHeader
-          title="Record Cash Payment"
-          subtitle="Record an in-person cash payment from a resident"
+          title={t("cashPayment.title")}
+          subtitle={t("cashPayment.subtitle")}
         />
 
         {/* Resident Picker */}
         <View style={styles.section}>
-          <Text style={styles.label}>Resident *</Text>
+          <Text style={styles.label}>{t("cashPayment.selectResident")} *</Text>
           <TouchableOpacity
             style={styles.pickerButton}
             onPress={() => setResidentPickerOpen(true)}
@@ -300,7 +302,7 @@ export default function CashPaymentScreen() {
                   color={colors.textTertiary}
                 />
                 <Text style={styles.pickerPlaceholderText}>
-                  Select a resident
+                  {t("cashPayment.selectResident")}
                 </Text>
               </View>
             )}
@@ -312,13 +314,13 @@ export default function CashPaymentScreen() {
         {selectedResident && (
           <View style={styles.section}>
             <View style={styles.chargesHeader}>
-              <Text style={styles.label}>Unpaid Charges</Text>
+              <Text style={styles.label}>{t("cashPayment.unpaidCharges")}</Text>
               {residentCharges.length > 0 && (
                 <TouchableOpacity onPress={selectAllShares}>
                   <Text style={styles.selectAllText}>
                     {selectedShareIds.size === residentCharges.length
-                      ? "Deselect All"
-                      : "Select All"}
+                      ? t("cashPayment.deselectAll")
+                      : t("cashPayment.selectAll")}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -327,7 +329,7 @@ export default function CashPaymentScreen() {
             {loadingCharges ? (
               <View style={styles.loadingRow}>
                 <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={styles.loadingText}>Loading charges...</Text>
+                <Text style={styles.loadingText}>{t("common.loading")}</Text>
               </View>
             ) : residentCharges.length === 0 ? (
               <Card style={styles.emptyCharges}>
@@ -338,7 +340,7 @@ export default function CashPaymentScreen() {
                     color={colors.success}
                   />
                   <Text style={styles.emptyChargesText}>
-                    No outstanding charges for this resident.
+                    {t("cashPayment.noUnpaidCharges")}
                   </Text>
                 </View>
               </Card>
@@ -395,11 +397,11 @@ export default function CashPaymentScreen() {
             {selectedShareIds.size > 0 && (
               <View style={styles.selectedSummary}>
                 <Text style={styles.selectedSummaryText}>
-                  {selectedShareIds.size} charge(s) selected
+                  {t("cashPayment.chargesSelected", { count: selectedShareIds.size })}
                 </Text>
                 <TouchableOpacity onPress={handleAutoFillAmount}>
                   <Text style={styles.autoFillText}>
-                    Auto-fill {selectedTotal.toLocaleString()} {currency}
+                    {t("cashPayment.autoFill", { amount: selectedTotal.toLocaleString(), currency })}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -409,7 +411,7 @@ export default function CashPaymentScreen() {
 
         {/* Amount */}
         <View style={styles.section}>
-          <Text style={styles.label}>Amount ({currency}) *</Text>
+          <Text style={styles.label}>{t("cashPayment.amount")} ({currency}) *</Text>
           <View style={styles.inputRow}>
             <View style={styles.currencyTag}>
               <Text style={styles.currencyText}>{currency}</Text>
@@ -418,7 +420,7 @@ export default function CashPaymentScreen() {
               style={styles.amountInput}
               value={amount}
               onChangeText={setAmount}
-              placeholder="0.00"
+              placeholder={t("cashPayment.amountPlaceholder")}
               placeholderTextColor={colors.textTertiary}
               keyboardType="decimal-pad"
             />
@@ -427,7 +429,7 @@ export default function CashPaymentScreen() {
 
         {/* Date */}
         <View style={styles.section}>
-          <Text style={styles.label}>Payment Date *</Text>
+          <Text style={styles.label}>{t("cashPayment.paymentDate")} *</Text>
           <View style={styles.inputWrapper}>
             <Icon
               name="calendar"
@@ -439,7 +441,7 @@ export default function CashPaymentScreen() {
               style={styles.input}
               value={paymentDate}
               onChangeText={setPaymentDate}
-              placeholder="YYYY-MM-DD"
+              placeholder={t("cashPayment.datePlaceholder")}
               placeholderTextColor={colors.textTertiary}
             />
           </View>
@@ -447,12 +449,12 @@ export default function CashPaymentScreen() {
 
         {/* Notes */}
         <View style={styles.section}>
-          <Text style={styles.label}>Notes (optional)</Text>
+          <Text style={styles.label}>{t("cashPayment.notes")}</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
             value={notes}
             onChangeText={setNotes}
-            placeholder="e.g. Paid in office, reference #123"
+            placeholder={t("cashPayment.notesPlaceholder")}
             placeholderTextColor={colors.textTertiary}
             multiline
             numberOfLines={3}
@@ -476,7 +478,7 @@ export default function CashPaymentScreen() {
             <Icon name="cash-check" size={20} color={colors.white} />
           )}
           <Text style={styles.submitText}>
-            {mutation.isPending ? "Recording..." : "Record Payment"}
+            {mutation.isPending ? t("cashPayment.recording") : t("cashPayment.recordPayment")}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -490,7 +492,7 @@ export default function CashPaymentScreen() {
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Resident</Text>
+            <Text style={styles.modalTitle}>{t("cashPayment.selectResident")}</Text>
             <TouchableOpacity
               onPress={() => {
                 setResidentPickerOpen(false);
@@ -512,7 +514,7 @@ export default function CashPaymentScreen() {
               style={styles.searchInput}
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="Search by name or email..."
+              placeholder={t("cashPayment.searchResident")}
               placeholderTextColor={colors.textTertiary}
               autoFocus
             />
@@ -557,8 +559,8 @@ export default function CashPaymentScreen() {
               ListEmptyComponent={
                 <EmptyState
                   icon="account-off-outline"
-                  title="No residents found"
-                  subtitle="Try a different search term"
+                  title={t("cashPayment.noResidentsFound")}
+                  subtitle={t("cashPayment.tryDifferentSearch")}
                 />
               }
             />

@@ -13,6 +13,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useTranslation } from "react-i18next";
 import { createAnnouncement } from "../../api/admin";
 import { Card, ScreenHeader } from "../../components/ui";
 import { colors, spacing, radius, typography, shadow } from "../../theme";
@@ -20,34 +21,24 @@ import dayjs from "dayjs";
 
 type Priority = "low" | "normal" | "urgent";
 
-const priorityOptions: Array<{
+const PRIORITY_DEFS: Array<{
   value: Priority;
-  label: string;
   icon: string;
   color: string;
 }> = [
-  {
-    value: "low",
-    label: "Low",
-    icon: "information-outline",
-    color: colors.textSecondary,
-  },
-  {
-    value: "normal",
-    label: "Normal",
-    icon: "information",
-    color: colors.primary,
-  },
-  {
-    value: "urgent",
-    label: "Urgent",
-    icon: "alert-circle",
-    color: colors.danger,
-  },
+  { value: "low", icon: "information-outline", color: colors.textSecondary },
+  { value: "normal", icon: "information", color: colors.primary },
+  { value: "urgent", icon: "alert-circle", color: colors.danger },
 ];
 
 export default function AnnouncementComposerScreen() {
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
+
+  const priorityOptions = PRIORITY_DEFS.map((p) => ({
+    ...p,
+    label: t(`announcements.priorities.${p.value}` as any),
+  }));
 
   // ── Form state ────────────────────────────────
   const [title, setTitle] = useState("");
@@ -76,21 +67,21 @@ export default function AnnouncementComposerScreen() {
 
   function handleSubmit() {
     if (!titleTrimmed) {
-      Alert.alert("Validation", "Please enter a title.");
+      Alert.alert(t("common.error"), t("announcements.titleLabel") + " required");
       return;
     }
     if (!bodyTrimmed) {
-      Alert.alert("Validation", "Please enter a body.");
+      Alert.alert(t("common.error"), t("announcements.bodyLabel") + " required");
       return;
     }
 
     Alert.alert(
-      "Publish Announcement",
-      `Send this ${priority} announcement to all residents?\n\n"${titleTrimmed}"`,
+      t("announcements.publishAnnouncement"),
+      `"${titleTrimmed}"`,
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Publish",
+          text: t("announcements.publish"),
           onPress: () => {
             mutation.mutate({
               title: titleTrimmed,
@@ -125,9 +116,9 @@ export default function AnnouncementComposerScreen() {
           <View style={styles.successIconBg}>
             <Icon name="check-circle" size={64} color={colors.success} />
           </View>
-          <Text style={styles.successTitle}>Announcement Published</Text>
+          <Text style={styles.successTitle}>{t("announcements.published")}</Text>
           <Text style={styles.successSubtitle}>
-            Your announcement has been sent to all residents.
+            {t("announcements.sentToAll")}
           </Text>
 
           <Card style={styles.successCard}>
@@ -166,7 +157,7 @@ export default function AnnouncementComposerScreen() {
               activeOpacity={0.8}
             >
               <Icon name="plus" size={20} color={colors.white} />
-              <Text style={styles.submitText}>Create Another</Text>
+              <Text style={styles.submitText}>{t("announcements.createAnother")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -175,7 +166,7 @@ export default function AnnouncementComposerScreen() {
               activeOpacity={0.8}
             >
               <Icon name="arrow-left" size={20} color={colors.primary} />
-              <Text style={styles.secondaryButtonText}>Go Back</Text>
+              <Text style={styles.secondaryButtonText}>{t("announcements.goBack")}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -193,18 +184,18 @@ export default function AnnouncementComposerScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <ScreenHeader
-          title="New Announcement"
-          subtitle="Notify all building residents"
+          title={t("announcements.newAnnouncement")}
+          subtitle={t("announcements.notifyAll")}
         />
 
         {/* Title */}
         <View style={styles.section}>
-          <Text style={styles.label}>Title *</Text>
+          <Text style={styles.label}>{t("announcements.titleLabel")} *</Text>
           <TextInput
             style={styles.input}
             value={title}
             onChangeText={setTitle}
-            placeholder="e.g. Water maintenance scheduled"
+            placeholder={t("announcements.titleInputPlaceholder")}
             placeholderTextColor={colors.textTertiary}
             maxLength={100}
           />
@@ -213,12 +204,12 @@ export default function AnnouncementComposerScreen() {
 
         {/* Body */}
         <View style={styles.section}>
-          <Text style={styles.label}>Body *</Text>
+          <Text style={styles.label}>{t("announcements.bodyLabel")} *</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
             value={body}
             onChangeText={setBody}
-            placeholder="Write the details of your announcement..."
+            placeholder={t("announcements.bodyInputPlaceholder")}
             placeholderTextColor={colors.textTertiary}
             multiline
             numberOfLines={6}
@@ -230,7 +221,7 @@ export default function AnnouncementComposerScreen() {
 
         {/* Priority */}
         <View style={styles.section}>
-          <Text style={styles.label}>Priority</Text>
+          <Text style={styles.label}>{t("announcements.priorityLabel")}</Text>
           <View style={styles.priorityRow}>
             {priorityOptions.map((option) => {
               const isActive = priority === option.value;
@@ -271,7 +262,7 @@ export default function AnnouncementComposerScreen() {
 
         {/* Preview */}
         <View style={styles.section}>
-          <Text style={styles.label}>Preview</Text>
+          <Text style={styles.label}>{t("announcements.preview")}</Text>
           <Card style={styles.previewCard}>
             <View style={styles.previewHeader}>
               <View
@@ -294,7 +285,7 @@ export default function AnnouncementComposerScreen() {
                   {currentPriorityConfig.label}
                 </Text>
               </View>
-              <Text style={styles.previewTime}>Just now</Text>
+              <Text style={styles.previewTime}>{t("announcements.justNow")}</Text>
             </View>
             <Text
               style={[
@@ -302,7 +293,7 @@ export default function AnnouncementComposerScreen() {
                 !titleTrimmed && styles.previewPlaceholder,
               ]}
             >
-              {titleTrimmed || "Announcement title"}
+              {titleTrimmed || t("announcements.previewTitlePlaceholder")}
             </Text>
             <Text
               style={[
@@ -311,7 +302,7 @@ export default function AnnouncementComposerScreen() {
               ]}
               numberOfLines={5}
             >
-              {bodyTrimmed || "Announcement body will appear here..."}
+              {bodyTrimmed || t("announcements.previewBodyPlaceholder")}
             </Text>
           </Card>
         </View>
@@ -332,7 +323,7 @@ export default function AnnouncementComposerScreen() {
             <Icon name="send" size={18} color={colors.white} />
           )}
           <Text style={styles.submitText}>
-            {mutation.isPending ? "Publishing..." : "Publish Announcement"}
+            {mutation.isPending ? t("announcements.publishing") : t("announcements.publishAnnouncement")}
           </Text>
         </TouchableOpacity>
       </ScrollView>

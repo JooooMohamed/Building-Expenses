@@ -3,6 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/auth";
 import { colors, typography } from "../theme";
 
@@ -65,6 +66,7 @@ const tabScreenOptions = {
 };
 
 function ResidentTabs() {
+  const { t } = useTranslation();
   return (
     <Tab.Navigator screenOptions={tabScreenOptions}>
       <Tab.Screen
@@ -72,6 +74,7 @@ function ResidentTabs() {
         component={DashboardScreen}
         options={{
           headerShown: false,
+          title: t("nav.dashboard"),
           tabBarIcon: ({ color, size }) => (
             <Icon name="view-dashboard-outline" size={size} color={color} />
           ),
@@ -82,6 +85,7 @@ function ResidentTabs() {
         component={PaymentHistoryScreen}
         options={{
           headerShown: false,
+          title: t("nav.payments"),
           tabBarIcon: ({ color, size }) => (
             <Icon name="credit-card-outline" size={size} color={color} />
           ),
@@ -92,7 +96,7 @@ function ResidentTabs() {
         component={ExpensesScreen}
         options={{
           headerShown: false,
-          title: "Expenses",
+          title: t("nav.expenses"),
           tabBarIcon: ({ color, size }) => (
             <Icon name="chart-bar" size={size} color={color} />
           ),
@@ -103,6 +107,7 @@ function ResidentTabs() {
         component={NotificationsScreen}
         options={{
           headerShown: false,
+          title: t("nav.notifications"),
           tabBarIcon: ({ color, size }) => (
             <Icon name="bell-outline" size={size} color={color} />
           ),
@@ -113,6 +118,7 @@ function ResidentTabs() {
 }
 
 function AdminTabs() {
+  const { t } = useTranslation();
   return (
     <Tab.Navigator screenOptions={tabScreenOptions}>
       <Tab.Screen
@@ -120,6 +126,7 @@ function AdminTabs() {
         component={AdminDashboardScreen}
         options={{
           headerShown: false,
+          title: t("nav.dashboard"),
           tabBarIcon: ({ color, size }) => (
             <Icon name="view-dashboard-outline" size={size} color={color} />
           ),
@@ -130,6 +137,7 @@ function AdminTabs() {
         component={ResidentsScreen}
         options={{
           headerShown: false,
+          title: t("nav.residents"),
           tabBarIcon: ({ color, size }) => (
             <Icon name="account-group-outline" size={size} color={color} />
           ),
@@ -140,6 +148,7 @@ function AdminTabs() {
         component={AdminExpensesScreen}
         options={{
           headerShown: false,
+          title: t("nav.expenses"),
           tabBarIcon: ({ color, size }) => (
             <Icon name="chart-bar" size={size} color={color} />
           ),
@@ -150,7 +159,7 @@ function AdminTabs() {
         component={NotificationsScreen}
         options={{
           headerShown: false,
-          title: "More",
+          title: t("nav.more"),
           tabBarIcon: ({ color, size }) => (
             <Icon
               name="dots-horizontal-circle-outline"
@@ -166,6 +175,7 @@ function AdminTabs() {
 
 export default function AppNavigator() {
   const { isAuthenticated, user } = useAuthStore();
+  const { t } = useTranslation();
 
   return (
     <NavigationContainer>
@@ -181,7 +191,7 @@ export default function AppNavigator() {
             <Stack.Screen
               name="ForgotPassword"
               component={ForgotPasswordScreen}
-              options={{ ...modalHeaderOptions, headerTitle: "Reset Password" }}
+              options={{ ...modalHeaderOptions, headerTitle: t("auth.resetPassword") }}
             />
           </>
         ) : (
@@ -195,49 +205,49 @@ export default function AppNavigator() {
             <Stack.Screen
               name="Announcements"
               component={AnnouncementsScreen}
-              options={{ ...modalHeaderOptions, headerTitle: "Announcements" }}
+              options={{ ...modalHeaderOptions, headerTitle: t("announcements.title") }}
             />
             <Stack.Screen
               name="Profile"
               component={ProfileScreen}
-              options={{ ...modalHeaderOptions, headerTitle: "Profile" }}
+              options={{ ...modalHeaderOptions, headerTitle: t("profile.title") }}
             />
 
             {/* Admin-only screens */}
             <Stack.Screen
               name="CashPayment"
               component={CashPaymentScreen}
-              options={{ ...modalHeaderOptions, headerTitle: "Record Payment" }}
+              options={{ ...modalHeaderOptions, headerTitle: t("cashPayment.title") }}
             />
             <Stack.Screen
               name="Reports"
               component={ReportsScreen}
-              options={{ ...modalHeaderOptions, headerTitle: "Reports" }}
+              options={{ ...modalHeaderOptions, headerTitle: t("reports.title") }}
             />
             <Stack.Screen
               name="ComposeAnnouncement"
               component={AnnouncementComposerScreen}
               options={{
                 ...modalHeaderOptions,
-                headerTitle: "New Announcement",
+                headerTitle: t("announcements.newAnnouncement"),
               }}
             />
             <Stack.Screen
               name="CreateExpense"
               component={CreateExpenseScreen}
-              options={{ ...modalHeaderOptions, headerTitle: "New Expense" }}
+              options={{ ...modalHeaderOptions, headerTitle: t("createExpense.title") }}
             />
             <Stack.Screen
               name="AddResident"
               component={AddResidentScreen}
-              options={{ ...modalHeaderOptions, headerTitle: "Add Resident" }}
+              options={{ ...modalHeaderOptions, headerTitle: t("addResident.title") }}
             />
             <Stack.Screen
               name="ResidentDetail"
               component={ResidentDetailScreen}
               options={{
                 ...modalHeaderOptions,
-                headerTitle: "Resident Details",
+                headerTitle: t("residentDetail.title"),
               }}
             />
             <Stack.Screen
@@ -245,7 +255,7 @@ export default function AppNavigator() {
               component={BillingScreen}
               options={{
                 ...modalHeaderOptions,
-                headerTitle: "Monthly Billing",
+                headerTitle: t("billing.title"),
               }}
             />
           </>

@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, FlatList, RefreshControl } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useTranslation } from "react-i18next";
 import { getAnnouncements } from "../../api/resident";
 import { Card, EmptyState, ScreenHeader } from "../../components/ui";
 import { colors, spacing, radius, typography } from "../../theme";
@@ -42,6 +43,7 @@ function AnnouncementItem({ item }: { item: Announcement }) {
 }
 
 export default function AnnouncementsScreen() {
+  const { t } = useTranslation();
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ["announcements"],
     queryFn: getAnnouncements,
@@ -49,7 +51,7 @@ export default function AnnouncementsScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Announcements" subtitle="Building news & updates" />
+      <ScreenHeader title={t("announcements.title")} subtitle={t("announcements.buildingUpdates")} />
       <FlatList
         data={data || []}
         keyExtractor={(item) => item._id}
@@ -63,8 +65,8 @@ export default function AnnouncementsScreen() {
           isLoading ? null : (
             <EmptyState
               icon="bullhorn-outline"
-              title="No announcements"
-              subtitle="Building news will appear here"
+              title={t("announcements.noAnnouncements")}
+              subtitle={t("announcements.buildingUpdates")}
             />
           )
         }

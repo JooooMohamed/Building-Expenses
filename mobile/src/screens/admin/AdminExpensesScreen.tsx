@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { getExpenses } from "../../api/admin";
 import {
@@ -33,19 +34,8 @@ import {
 import type { Expense } from "../../types";
 import { useCurrency } from "../../hooks/useCurrency";
 
-const CATEGORIES = [
-  { key: "all", label: "All" },
-  { key: "fixed", label: "Fixed" },
-  { key: "maintenance", label: "Maintenance" },
-  { key: "elevator", label: "Elevator" },
-  { key: "project", label: "Project" },
-  { key: "emergency", label: "Emergency" },
-];
-
-const STATUS_TABS = [
-  { key: "active", label: "Active" },
-  { key: "cancelled", label: "Cancelled" },
-];
+const CATEGORY_KEYS = ["all", "fixed", "maintenance", "elevator", "project", "emergency"];
+const STATUS_KEYS = ["active", "cancelled"] as const;
 
 function ExpenseItem({ expense }: { expense: Expense }) {
   const catColor = categoryColors[expense.category] || colors.textTertiary;
@@ -112,10 +102,20 @@ function ExpenseItem({ expense }: { expense: Expense }) {
 export default function AdminExpensesScreen() {
   const currency = useCurrency();
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState<"active" | "cancelled">(
     "active",
   );
+
+  const CATEGORIES = CATEGORY_KEYS.map((key) => ({
+    key,
+    label: key === "all" ? t("expenses.all") : t(`expenses.${key}` as any),
+  }));
+  const STATUS_TABS = STATUS_KEYS.map((key) => ({
+    key,
+    label: t(`expenses.${key}` as any),
+  }));
 
   const expensesQuery = useQuery({
     queryKey: ["admin-expenses"],
@@ -141,7 +141,7 @@ export default function AdminExpensesScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <ScreenHeader
-        title="Expenses"
+        title={t("expenses.title")}
         subtitle={`${filteredExpenses.length} expenses - ${totalAmount.toLocaleString()} ${currency} total`}
       />
 
@@ -220,12 +220,8 @@ export default function AdminExpensesScreen() {
         {filteredExpenses.length === 0 ? (
           <EmptyState
             icon="receipt"
-            title="No expenses found"
-            subtitle={
-              selectedCategory === "all"
-                ? `No ${selectedStatus} expenses`
-                : `No ${selectedStatus} ${selectedCategory} expenses`
-            }
+            title={t("expenses.noExpensesFound")}
+            subtitle={t("expenses.noExpenses")}
           />
         ) : (
           filteredExpenses.map((expense) => (

@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useTranslation } from "react-i18next";
 import { getNotifications, markNotificationRead } from "../../api/resident";
 import { EmptyState, ScreenHeader } from "../../components/ui";
 import { colors, spacing, radius, typography, shadow } from "../../theme";
@@ -62,6 +63,7 @@ function NotificationItem({
 }
 
 export default function NotificationsScreen() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data, isRefetching, refetch } = useQuery({
     queryKey: ["notifications"],
@@ -79,7 +81,7 @@ export default function NotificationsScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Notifications" />
+      <ScreenHeader title={t("notifications.title")} />
       <FlatList
         data={data || []}
         keyExtractor={(item) => item._id}
@@ -99,8 +101,8 @@ export default function NotificationsScreen() {
         ListEmptyComponent={
           <EmptyState
             icon="bell-check-outline"
-            title="All clear!"
-            subtitle="No notifications right now"
+            title={t("notifications.allClear")}
+            subtitle={t("notifications.noNotificationsNow")}
           />
         }
       />

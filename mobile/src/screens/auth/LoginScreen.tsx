@@ -13,11 +13,13 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../../store/auth";
 import { colors, spacing, radius, typography, shadow } from "../../theme";
 
 export default function LoginScreen() {
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -50,14 +52,14 @@ export default function LoginScreen() {
             <Icon name="office-building" size={40} color={colors.primary} />
           </View>
           <Text style={styles.title}>Building{"\n"}Expenses</Text>
-          <Text style={styles.subtitle}>Manage your building finances</Text>
+          <Text style={styles.subtitle}>{t("auth.appSubtitle")}</Text>
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.formTitle}>Sign In</Text>
+          <Text style={styles.formTitle}>{t("auth.signIn")}</Text>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>{t("auth.email")}</Text>
             <View style={styles.inputContainer}>
               <Icon
                 name="email-outline"
@@ -69,7 +71,7 @@ export default function LoginScreen() {
                 style={styles.input}
                 value={email}
                 onChangeText={setEmail}
-                placeholder="Enter your email"
+                placeholder={t("auth.emailPlaceholder")}
                 placeholderTextColor={colors.textTertiary}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -79,7 +81,7 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={styles.label}>{t("auth.password")}</Text>
             <View style={styles.inputContainer}>
               <Icon
                 name="lock-outline"
@@ -91,7 +93,7 @@ export default function LoginScreen() {
                 style={styles.input}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Enter your password"
+                placeholder={t("auth.passwordPlaceholder")}
                 placeholderTextColor={colors.textTertiary}
                 secureTextEntry={!showPassword}
               />
@@ -118,7 +120,7 @@ export default function LoginScreen() {
               <ActivityIndicator color={colors.white} />
             ) : (
               <>
-                <Text style={styles.buttonText}>Sign In</Text>
+                <Text style={styles.buttonText}>{t("auth.signIn")}</Text>
                 <Icon name="arrow-right" size={20} color={colors.white} />
               </>
             )}
@@ -128,7 +130,7 @@ export default function LoginScreen() {
             style={styles.forgotButton}
             onPress={() => navigation.navigate("ForgotPassword")}
           >
-            <Text style={styles.forgotText}>Forgot Password?</Text>
+            <Text style={styles.forgotText}>{t("auth.forgotPassword")}</Text>
           </TouchableOpacity>
         </View>
       </View>

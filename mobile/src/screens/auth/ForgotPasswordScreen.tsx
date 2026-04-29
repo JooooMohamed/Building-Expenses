@@ -12,11 +12,13 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import client from "../../api/client";
 import { colors, spacing, radius, typography, shadow } from "../../theme";
 
 export default function ForgotPasswordScreen() {
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -28,7 +30,7 @@ export default function ForgotPasswordScreen() {
 
   const handleSendReset = async () => {
     if (!email.trim()) {
-      Alert.alert("Error", "Please enter your email address");
+      Alert.alert(t("common.error"), t("auth.emailPlaceholder"));
       return;
     }
 
@@ -37,7 +39,6 @@ export default function ForgotPasswordScreen() {
       await client.post("/auth/forgot-password", { email: email.trim().toLowerCase() });
       setSent(true);
     } catch {
-      // Always show success to prevent email enumeration
       setSent(true);
     } finally {
       setIsLoading(false);
@@ -46,11 +47,11 @@ export default function ForgotPasswordScreen() {
 
   const handleResetPassword = async () => {
     if (!token.trim() || !newPassword.trim()) {
-      Alert.alert("Error", "Please fill in all fields");
+      Alert.alert(t("common.error"), t("common.submit") + " required");
       return;
     }
     if (newPassword.length < 8) {
-      Alert.alert("Error", "Password must be at least 8 characters");
+      Alert.alert(t("common.error"), t("auth.newPasswordPlaceholder"));
       return;
     }
 
@@ -60,11 +61,11 @@ export default function ForgotPasswordScreen() {
         token: token.trim(),
         newPassword,
       });
-      Alert.alert("Success", "Your password has been reset. You can now log in.", [
-        { text: "OK", onPress: () => navigation.goBack() },
+      Alert.alert(t("auth.resetPassword"), undefined, [
+        { text: t("common.done"), onPress: () => navigation.goBack() },
       ]);
     } catch {
-      Alert.alert("Error", "Invalid or expired reset token. Please try again.");
+      Alert.alert(t("common.error"), t("auth.resetToken") + " invalid");
     } finally {
       setIsLoading(false);
     }
@@ -77,17 +78,16 @@ export default function ForgotPasswordScreen() {
           <View style={styles.iconContainer}>
             <Icon name="email-check-outline" size={64} color={colors.success} />
           </View>
-          <Text style={styles.title}>Check Your Email</Text>
+          <Text style={styles.title}>{t("auth.checkEmail")}</Text>
           <Text style={styles.subtitle}>
-            If an account with {email} exists, we've sent password reset
-            instructions to that address.
+            {t("auth.checkEmailSubtitle", { email })}
           </Text>
 
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={() => setShowReset(true)}
           >
-            <Text style={styles.primaryButtonText}>I Have a Reset Token</Text>
+            <Text style={styles.primaryButtonText}>{t("auth.haveToken")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -97,14 +97,14 @@ export default function ForgotPasswordScreen() {
               setEmail("");
             }}
           >
-            <Text style={styles.linkText}>Try a different email</Text>
+            <Text style={styles.linkText}>{t("auth.tryDifferentEmail")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.linkButton}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.linkText}>Back to Login</Text>
+            <Text style={styles.linkText}>{t("auth.backToLogin")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -125,9 +125,9 @@ export default function ForgotPasswordScreen() {
             <View style={styles.iconContainer}>
               <Icon name="lock-reset" size={64} color={colors.primary} />
             </View>
-            <Text style={styles.title}>Reset Password</Text>
+            <Text style={styles.title}>{t("auth.resetPasswordTitle")}</Text>
             <Text style={styles.subtitle}>
-              Enter the reset token from your email and your new password.
+              {t("auth.resetPasswordSubtitle2")}
             </Text>
 
             <View style={styles.inputContainer}>
@@ -139,7 +139,7 @@ export default function ForgotPasswordScreen() {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Reset token"
+                placeholder={t("auth.resetToken")}
                 value={token}
                 onChangeText={setToken}
                 autoCapitalize="none"
@@ -156,7 +156,7 @@ export default function ForgotPasswordScreen() {
               />
               <TextInput
                 style={styles.input}
-                placeholder="New password (min 8 characters)"
+                placeholder={t("auth.newPasswordPlaceholder")}
                 value={newPassword}
                 onChangeText={setNewPassword}
                 secureTextEntry
@@ -170,7 +170,7 @@ export default function ForgotPasswordScreen() {
               disabled={isLoading}
             >
               <Text style={styles.primaryButtonText}>
-                {isLoading ? "Resetting..." : "Reset Password"}
+                {isLoading ? t("auth.resetting") : t("auth.resetPassword")}
               </Text>
             </TouchableOpacity>
 
@@ -199,10 +199,9 @@ export default function ForgotPasswordScreen() {
           <View style={styles.iconContainer}>
             <Icon name="lock-question" size={64} color={colors.primary} />
           </View>
-          <Text style={styles.title}>Forgot Password?</Text>
+          <Text style={styles.title}>{t("auth.forgotTitle")}</Text>
           <Text style={styles.subtitle}>
-            Enter your email address and we'll send you instructions to reset
-            your password.
+            {t("auth.forgotSubtitle")}
           </Text>
 
           <View style={styles.inputContainer}>
@@ -214,7 +213,7 @@ export default function ForgotPasswordScreen() {
             />
             <TextInput
               style={styles.input}
-              placeholder="Email address"
+              placeholder={t("auth.emailAddressPlaceholder")}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -229,7 +228,7 @@ export default function ForgotPasswordScreen() {
             disabled={isLoading}
           >
             <Text style={styles.primaryButtonText}>
-              {isLoading ? "Sending..." : "Send Reset Instructions"}
+              {isLoading ? t("auth.sending") : t("auth.sendInstructions")}
             </Text>
           </TouchableOpacity>
 
@@ -237,7 +236,7 @@ export default function ForgotPasswordScreen() {
             style={styles.linkButton}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.linkText}>Back to Login</Text>
+            <Text style={styles.linkText}>{t("auth.backToLogin")}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

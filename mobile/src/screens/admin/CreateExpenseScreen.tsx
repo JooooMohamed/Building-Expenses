@@ -14,42 +14,29 @@ import { useNavigation } from "@react-navigation/native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import dayjs from "dayjs";
+import { useTranslation } from "react-i18next";
 import { createExpense } from "../../api/admin";
 import { useCurrency } from "../../hooks/useCurrency";
 import { colors, spacing, radius, typography, shadow } from "../../theme";
 
-const categories = [
-  {
-    key: "fixed",
-    label: "Fixed / Recurring",
-    icon: "calendar-check",
-    color: colors.fixed,
-  },
-  {
-    key: "maintenance",
-    label: "Maintenance",
-    icon: "wrench",
-    color: colors.maintenance,
-  },
-  {
-    key: "elevator",
-    label: "Elevator",
-    icon: "elevator-passenger",
-    color: colors.elevator,
-  },
-  { key: "project", label: "Project", icon: "hammer", color: colors.project },
-  {
-    key: "emergency",
-    label: "Emergency",
-    icon: "alert-circle",
-    color: colors.emergency,
-  },
+const CATEGORY_DEFS = [
+  { key: "fixed", icon: "calendar-check", color: colors.fixed },
+  { key: "maintenance", icon: "wrench", color: colors.maintenance },
+  { key: "elevator", icon: "elevator-passenger", color: colors.elevator },
+  { key: "project", icon: "hammer", color: colors.project },
+  { key: "emergency", icon: "alert-circle", color: colors.emergency },
 ];
 
 export default function CreateExpenseScreen() {
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
   const currency = useCurrency();
+  const { t } = useTranslation();
+
+  const categories = CATEGORY_DEFS.map((cat) => ({
+    ...cat,
+    label: t(`createExpense.categories.${cat.key}` as any),
+  }));
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -70,24 +57,24 @@ export default function CreateExpenseScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-expenses"] });
       queryClient.invalidateQueries({ queryKey: ["admin-monthly-report"] });
-      Alert.alert("Success", "Expense created and distributed to all units.", [
-        { text: "OK", onPress: () => navigation.goBack() },
+      Alert.alert(t("createExpense.success"), undefined, [
+        { text: t("common.done"), onPress: () => navigation.goBack() },
       ]);
     },
-    onError: () => Alert.alert("Error", "Failed to create expense"),
+    onError: () => Alert.alert(t("common.error")),
   });
 
   const handleSubmit = () => {
-    if (!title.trim()) return Alert.alert("Error", "Title is required");
+    if (!title.trim()) return Alert.alert(t("common.error"), t("createExpense.titleLabel") + " required");
     if (!amount || parseFloat(amount) <= 0)
-      return Alert.alert("Error", "Enter a valid amount");
+      return Alert.alert(t("common.error"), t("cashPayment.errorInvalidAmount"));
 
     Alert.alert(
-      "Create Expense",
-      `${title}\n${parseFloat(amount).toLocaleString()} ${currency} (${category})\n\nThis will be distributed to all occupied units.`,
+      t("createExpense.create"),
+      `${title}\n${parseFloat(amount).toLocaleString()} ${currency} (${category})`,
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Create", onPress: () => mutation.mutate() },
+        { text: t("common.cancel"), style: "cancel" },
+        { text: t("createExpense.create"), onPress: () => mutation.mutate() },
       ],
     );
   };
@@ -99,23 +86,23 @@ export default function CreateExpenseScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.field}>
-        <Text style={styles.label}>Title</Text>
+        <Text style={styles.label}>{t("createExpense.titleLabel")}</Text>
         <TextInput
           style={styles.input}
           value={title}
           onChangeText={setTitle}
-          placeholder="e.g. Monthly Cleaning Service"
+          placeholder={t("createExpense.titlePlaceholder")}
           placeholderTextColor={colors.textTertiary}
         />
       </View>
 
       <View style={styles.field}>
-        <Text style={styles.label}>Description (optional)</Text>
+        <Text style={styles.label}>{t("createExpense.descriptionLabel")}</Text>
         <TextInput
           style={[styles.input, styles.multiline]}
           value={description}
           onChangeText={setDescription}
-          placeholder="Additional details..."
+          placeholder={t("createExpense.descriptionPlaceholderLong")}
           placeholderTextColor={colors.textTertiary}
           multiline
           numberOfLines={3}
@@ -123,7 +110,7 @@ export default function CreateExpenseScreen() {
       </View>
 
       <View style={styles.field}>
-        <Text style={styles.label}>Category</Text>
+        <Text style={styles.label}>{t("createExpense.categoryLabel")}</Text>
         <View style={styles.categoryGrid}>
           {categories.map((cat) => (
             <TouchableOpacity
@@ -156,7 +143,7 @@ export default function CreateExpenseScreen() {
       </View>
 
       <View style={styles.field}>
-        <Text style={styles.label}>Amount ({currency})</Text>
+        <Text style={styles.label}>{t("createExpense.amountLabel")} ({currency})</Text>
         <TextInput
           style={styles.input}
           value={amount}
@@ -177,7 +164,7 @@ export default function CreateExpenseScreen() {
           size={24}
           color={isRecurring ? colors.primary : colors.textTertiary}
         />
-        <Text style={styles.toggleLabel}>Recurring expense (monthly)</Text>
+        <Text style={styles.toggleLabel}>{t("createExpense.recurringLabel")}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -188,7 +175,7 @@ export default function CreateExpenseScreen() {
         {mutation.isPending ? (
           <ActivityIndicator color={colors.white} />
         ) : (
-          <Text style={styles.submitText}>Create Expense</Text>
+          <Text style={styles.submitText}>{t("createExpense.create")}</Text>
         )}
       </TouchableOpacity>
     </ScrollView>

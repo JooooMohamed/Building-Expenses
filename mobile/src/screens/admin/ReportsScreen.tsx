@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useTranslation } from "react-i18next";
 import { getMonthlyReport, getCollectionStatus } from "../../api/admin";
 import {
   Card,
@@ -52,6 +53,7 @@ const methodConfig: Record<
 
 export default function ReportsScreen() {
   const currency = useCurrency();
+  const { t } = useTranslation();
   const [periodOffset, setPeriodOffset] = useState(0);
   const month = dayjs().subtract(periodOffset, "month").format("YYYY-MM");
   const displayMonth = dayjs()
@@ -110,7 +112,7 @@ export default function ReportsScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader title="Reports" subtitle="Monthly financial overview" />
+        <ScreenHeader title={t("reports.title")} subtitle={t("reports.subtitle")} />
 
         {/* Period Selector */}
         <View style={styles.periodSelector}>
@@ -145,14 +147,14 @@ export default function ReportsScreen() {
         {isLoading ? (
           <View style={styles.loading}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Loading report...</Text>
+            <Text style={styles.loadingText}>{t("reports.loading")}</Text>
           </View>
         ) : !report ? (
           <View style={styles.section}>
             <EmptyState
               icon="chart-bar"
-              title="No report data"
-              subtitle={`No data available for ${displayMonth}`}
+              title={t("reports.noReportData")}
+              subtitle={`${t("reports.noData")} - ${displayMonth}`}
             />
           </View>
         ) : (
@@ -165,24 +167,24 @@ export default function ReportsScreen() {
                   size={24}
                   color="rgba(255,255,255,0.8)"
                 />
-                <Text style={styles.summaryLabel}>Monthly Summary</Text>
+                <Text style={styles.summaryLabel}>{t("reports.monthlySummary")}</Text>
               </View>
 
               <View style={styles.summaryGrid}>
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryItemLabel}>Total Expenses</Text>
+                  <Text style={styles.summaryItemLabel}>{t("reports.totalExpenses")}</Text>
                   <Text style={styles.summaryItemValue}>
                     {(report.expenses.total || 0).toLocaleString()}
                   </Text>
                 </View>
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryItemLabel}>Collected</Text>
+                  <Text style={styles.summaryItemLabel}>{t("reports.collected")}</Text>
                   <Text style={styles.summaryItemValue}>
                     {(report.collections.collected || 0).toLocaleString()}
                   </Text>
                 </View>
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryItemLabel}>Collection Rate</Text>
+                  <Text style={styles.summaryItemLabel}>{t("reports.collectionRate")}</Text>
                   <Text
                     style={[
                       styles.summaryItemValue,
@@ -200,7 +202,7 @@ export default function ReportsScreen() {
                   </Text>
                 </View>
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryItemLabel}>Outstanding</Text>
+                  <Text style={styles.summaryItemLabel}>{t("reports.outstanding")}</Text>
                   <Text style={styles.summaryItemValue}>
                     {(report.outstanding.total || 0).toLocaleString()}
                   </Text>
@@ -225,7 +227,7 @@ export default function ReportsScreen() {
 
             {/* Expense Breakdown */}
             <View style={styles.section}>
-              <SectionHeader title="Expense Breakdown" />
+              <SectionHeader title={t("reports.expenseBreakdown")} />
               {expenseCategories.length === 0 ? (
                 <EmptyState
                   icon="chart-bar"
@@ -283,7 +285,7 @@ export default function ReportsScreen() {
 
             {/* Payment Methods */}
             <View style={styles.section}>
-              <SectionHeader title="Payment Methods" />
+              <SectionHeader title={t("reports.paymentMethods")} />
               {paymentMethods.length === 0 ? (
                 <EmptyState
                   icon="credit-card-off-outline"
@@ -356,7 +358,7 @@ export default function ReportsScreen() {
             {/* Collection Status */}
             {collection && (
               <View style={styles.section}>
-                <SectionHeader title="Collection Status" />
+                <SectionHeader title={t("reports.collectionStatus")} />
 
                 {/* Summary counts */}
                 <View style={styles.statusSummary}>
@@ -374,7 +376,7 @@ export default function ReportsScreen() {
                     <Text
                       style={[styles.statusPillText, { color: colors.success }]}
                     >
-                      {collection.summary.paid} Paid
+                      {collection.summary.paid} {t("reports.paid")}
                     </Text>
                   </View>
                   <View
@@ -391,7 +393,7 @@ export default function ReportsScreen() {
                     <Text
                       style={[styles.statusPillText, { color: colors.warning }]}
                     >
-                      {collection.summary.partial} Partial
+                      {collection.summary.partial} {t("reports.partial")}
                     </Text>
                   </View>
                   <View
@@ -404,7 +406,7 @@ export default function ReportsScreen() {
                     <Text
                       style={[styles.statusPillText, { color: colors.danger }]}
                     >
-                      {collection.summary.unpaid} Unpaid
+                      {collection.summary.unpaid} {t("reports.unpaid")}
                     </Text>
                   </View>
                 </View>

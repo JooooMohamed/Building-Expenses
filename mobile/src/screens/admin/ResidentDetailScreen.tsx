@@ -11,6 +11,7 @@ import {
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useTranslation } from "react-i18next";
 import { getResident, getUnits, deactivateResident } from "../../api/admin";
 import { Card, StatusBadge, SectionHeader } from "../../components/ui";
 import { colors, spacing, radius, typography, shadow } from "../../theme";
@@ -20,6 +21,7 @@ export default function ResidentDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const { residentId } = route.params;
 
   const residentQuery = useQuery({
@@ -36,8 +38,8 @@ export default function ResidentDetailScreen() {
     mutationFn: () => deactivateResident(residentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-residents"] });
-      Alert.alert("Done", "Resident deactivated", [
-        { text: "OK", onPress: () => navigation.goBack() },
+      Alert.alert(t("residentDetail.deactivate"), undefined, [
+        { text: t("common.done"), onPress: () => navigation.goBack() },
       ]);
     },
   });
@@ -50,11 +52,11 @@ export default function ResidentDetailScreen() {
 
   const handleDeactivate = () => {
     Alert.alert(
-      "Deactivate Resident",
-      `Are you sure you want to deactivate ${resident?.firstName} ${resident?.lastName}?`,
+      t("residentDetail.deactivate"),
+      `${resident?.firstName} ${resident?.lastName}?`,
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Deactivate", style: "destructive", onPress: () => deactivateMutation.mutate() },
+        { text: t("common.cancel"), style: "cancel" },
+        { text: t("residentDetail.deactivate"), style: "destructive", onPress: () => deactivateMutation.mutate() },
       ],
     );
   };
@@ -62,7 +64,7 @@ export default function ResidentDetailScreen() {
   if (!resident) {
     return (
       <View style={styles.container}>
-        <Text style={styles.loadingText}>Loading...</Text>
+        <Text style={styles.loadingText}>{t("common.loading")}</Text>
       </View>
     );
   }
@@ -91,36 +93,36 @@ export default function ResidentDetailScreen() {
 
       {/* Info cards */}
       <View style={styles.section}>
-        <SectionHeader title="Contact" />
+        <SectionHeader title={t("residentDetail.contact")} />
         <Card>
-          <InfoRow icon="email-outline" label="Email" value={resident.email} />
-          <InfoRow icon="phone-outline" label="Phone" value={resident.phone || "N/A"} />
+          <InfoRow icon="email-outline" label={t("addResident.email")} value={resident.email} />
+          <InfoRow icon="phone-outline" label={t("addResident.phone")} value={resident.phone || "N/A"} />
         </Card>
       </View>
 
       {residentUnit && (
         <View style={styles.section}>
-          <SectionHeader title="Unit" />
+          <SectionHeader title={t("residentDetail.unit")} />
           <Card>
-            <InfoRow icon="door" label="Unit" value={residentUnit.unitNumber} />
-            <InfoRow icon="stairs" label="Floor" value={String(residentUnit.floor)} />
-            <InfoRow icon="ruler-square" label="Area" value={residentUnit.area ? `${residentUnit.area} m²` : "N/A"} />
-            <InfoRow icon="scale-balance" label="Share Coefficient" value={String(residentUnit.shareCoefficient)} />
+            <InfoRow icon="door" label={t("residentDetail.unit")} value={residentUnit.unitNumber} />
+            <InfoRow icon="stairs" label={t("residentDetail.floor")} value={String(residentUnit.floor)} />
+            <InfoRow icon="ruler-square" label={t("residentDetail.area")} value={residentUnit.area ? `${residentUnit.area} m²` : "N/A"} />
+            <InfoRow icon="scale-balance" label={t("residentDetail.shareCoefficient")} value={String(residentUnit.shareCoefficient)} />
           </Card>
         </View>
       )}
 
       <View style={styles.section}>
-        <SectionHeader title="Account" />
+        <SectionHeader title={t("residentDetail.account")} />
         <Card>
-          <InfoRow icon="calendar-clock" label="Payment Freq." value={resident.paymentFrequency || "monthly"} />
-          <InfoRow icon="shield-account" label="Role" value={resident.role} />
+          <InfoRow icon="calendar-clock" label={t("residentDetail.paymentFreq")} value={resident.paymentFrequency || "monthly"} />
+          <InfoRow icon="shield-account" label={t("residentDetail.role")} value={resident.role} />
         </Card>
       </View>
 
       <TouchableOpacity style={styles.dangerButton} onPress={handleDeactivate}>
         <Icon name="account-off-outline" size={20} color={colors.danger} />
-        <Text style={styles.dangerText}>Deactivate Resident</Text>
+        <Text style={styles.dangerText}>{t("residentDetail.deactivate")}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

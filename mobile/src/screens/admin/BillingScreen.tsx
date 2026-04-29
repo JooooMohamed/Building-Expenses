@@ -11,6 +11,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import {
   generateCharges,
@@ -24,6 +25,7 @@ import type { BillingPeriod, ResidentCharge } from "../../types";
 export default function BillingScreen() {
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
 
   const currentMonth = dayjs().format("YYYY-MM");
@@ -88,9 +90,9 @@ export default function BillingScreen() {
     >
       {/* Generate Billing Section */}
       <View style={styles.section}>
-        <SectionHeader title="Generate Monthly Billing" />
+        <SectionHeader title={t("billing.generateMonthlyBilling")} />
         <Text style={styles.subtitle}>
-          Create charges for all occupied units based on active expenses.
+          {t("billing.createChargesSubtitle")}
         </Text>
 
         <View style={styles.monthButtons}>
@@ -117,7 +119,7 @@ export default function BillingScreen() {
                   <View style={styles.monthButtonText}>
                     <Text style={styles.monthLabel}>{label}</Text>
                     <Text style={styles.monthStatus}>
-                      {exists ? "Already generated" : "Ready to generate"}
+                      {exists ? t("billing.alreadyGenerated") : t("billing.readyToGenerate")}
                     </Text>
                   </View>
                 </View>
@@ -136,14 +138,14 @@ export default function BillingScreen() {
         {generateMutation.isPending && (
           <View style={styles.generatingRow}>
             <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.generatingText}>Generating charges...</Text>
+            <Text style={styles.generatingText}>{t("billing.generating")}</Text>
           </View>
         )}
       </View>
 
       {/* Past Billing Periods */}
       <View style={styles.section}>
-        <SectionHeader title="Billing History" />
+        <SectionHeader title={t("billing.billingHistory")} />
         {periodsQuery.isLoading ? (
           <ActivityIndicator
             size="small"
@@ -153,8 +155,8 @@ export default function BillingScreen() {
         ) : periods.length === 0 ? (
           <EmptyState
             icon="calendar-blank-outline"
-            title="No billing periods yet"
-            subtitle="Generate your first billing above"
+            title={t("billing.noPeriods")}
+            subtitle={t("billing.generateFirst")}
           />
         ) : (
           periods.map((bp) => (
@@ -194,13 +196,13 @@ export default function BillingScreen() {
               {selectedPeriod === bp.period && chargesQuery.data && (
                 <View style={styles.chargeSummary}>
                   <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Total Charges</Text>
+                    <Text style={styles.summaryLabel}>{t("billing.totalCount")}</Text>
                     <Text style={styles.summaryValue}>
                       {chargesQuery.data.summary.total}
                     </Text>
                   </View>
                   <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Paid</Text>
+                    <Text style={styles.summaryLabel}>{t("billing.paid")}</Text>
                     <Text
                       style={[styles.summaryValue, { color: colors.success }]}
                     >
@@ -208,7 +210,7 @@ export default function BillingScreen() {
                     </Text>
                   </View>
                   <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Partial</Text>
+                    <Text style={styles.summaryLabel}>{t("billing.partial")}</Text>
                     <Text
                       style={[styles.summaryValue, { color: colors.warning }]}
                     >
@@ -216,7 +218,7 @@ export default function BillingScreen() {
                     </Text>
                   </View>
                   <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Unpaid</Text>
+                    <Text style={styles.summaryLabel}>{t("billing.overdue")}</Text>
                     <Text
                       style={[styles.summaryValue, { color: colors.danger }]}
                     >

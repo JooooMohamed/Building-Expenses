@@ -1,3 +1,4 @@
+import "./src/i18n"; // must import before any component that uses t()
 import React, { useEffect } from "react";
 import { StatusBar, View, ActivityIndicator, StyleSheet } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

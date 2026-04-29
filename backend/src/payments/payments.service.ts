@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
+import { randomBytes } from 'crypto';
 import { Model, Types } from 'mongoose';
 import { Payment, PaymentDocument } from './schemas/payment.schema';
 import { ExpenseShare, ExpenseShareDocument } from '../expenses/schemas/expense-share.schema';
@@ -11,7 +12,6 @@ import { RecordCashPaymentDto, InitiatePaymentDto } from './dto/create-payment.d
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
-  private receiptCounter = 0;
 
   constructor(
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
@@ -31,9 +31,7 @@ export class PaymentsService {
       throw new BadRequestException('Amount must be positive');
     }
 
-    // Generate unique receipt number
-    this.receiptCounter++;
-    const receiptNumber = `R-${new Date().getFullYear()}-${Date.now()}-${this.receiptCounter}`;
+    const receiptNumber = `R-${new Date().getFullYear()}-${Date.now()}-${randomBytes(3).toString('hex')}`;
 
     const payment = await this.paymentModel.create({
       buildingId: new Types.ObjectId(buildingId),

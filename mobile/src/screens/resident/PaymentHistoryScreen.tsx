@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, FlatList, RefreshControl } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useTranslation } from "react-i18next";
 import { getMyPayments } from "../../api/resident";
 import {
   Card,
@@ -9,18 +10,24 @@ import {
   EmptyState,
   ScreenHeader,
 } from "../../components/ui";
-import { colors, spacing, radius, typography } from "../../theme";
+import { colors, spacing, typography } from "../../theme";
 import dayjs from "dayjs";
 import type { Payment } from "../../types";
 
-const methodConfig: Record<string, { icon: string; label: string }> = {
-  cash: { icon: "cash", label: "Cash" },
-  online: { icon: "credit-card-outline", label: "Online" },
-  bank_transfer: { icon: "bank-outline", label: "Bank Transfer" },
+const methodIcons: Record<string, string> = {
+  cash: "cash",
+  online: "credit-card-outline",
+  bank_transfer: "bank-outline",
 };
 
 function PaymentItem({ payment }: { payment: Payment }) {
-  const method = methodConfig[payment.method] || methodConfig.cash;
+  const { t } = useTranslation();
+  const methodConfig: Record<string, { icon: string; label: string }> = {
+    cash: { icon: "cash", label: t("paymentHistory.method.cash") },
+    online: { icon: "credit-card-outline", label: t("paymentHistory.method.online") },
+    bank_transfer: { icon: "bank-outline", label: t("paymentHistory.method.bankTransfer") },
+  };
+  const method = methodConfig[payment.method] || { icon: methodIcons[payment.method] || "cash", label: payment.method };
   return (
     <Card style={styles.item}>
       <View style={styles.itemRow}>
@@ -46,6 +53,7 @@ function PaymentItem({ payment }: { payment: Payment }) {
 }
 
 export default function PaymentHistoryScreen() {
+  const { t } = useTranslation();
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ["my-payments"],
     queryFn: getMyPayments,
@@ -53,7 +61,7 @@ export default function PaymentHistoryScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Payment History" subtitle="Your payment records" />
+      <ScreenHeader title={t("paymentHistory.title")} subtitle={t("paymentHistory.subtitle")} />
       <FlatList
         data={data || []}
         keyExtractor={(item) => item._id}
@@ -67,8 +75,8 @@ export default function PaymentHistoryScreen() {
           isLoading ? null : (
             <EmptyState
               icon="credit-card-off-outline"
-              title="No payments yet"
-              subtitle="Your payment history will appear here"
+              title={t("paymentHistory.noPayments")}
+              subtitle={t("paymentHistory.noPaymentsSubtitle")}
             />
           )
         }

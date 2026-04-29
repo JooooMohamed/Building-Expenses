@@ -13,6 +13,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import dayjs from "dayjs";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../../store/auth";
 import {
   getBuilding,
@@ -95,6 +96,7 @@ function OverdueItem({ charge, currency }: { charge: ResidentCharge; currency: s
 export default function AdminDashboardScreen() {
   const user = useAuthStore((s) => s.user);
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
   const currentMonth = dayjs().format("YYYY-MM");
 
   const buildingQuery = useQuery({
@@ -162,30 +164,30 @@ export default function AdminDashboardScreen() {
 
   const hour = new Date().getHours();
   const greeting =
-    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+    hour < 12 ? t("dashboard.goodMorning") : hour < 18 ? t("dashboard.goodAfternoon") : t("dashboard.goodEvening");
 
   const quickActions = [
     {
       icon: "plus-circle-outline",
-      label: "Add Expense",
+      label: t("dashboard.addExpense"),
       color: colors.primary,
       screen: "CreateExpense",
     },
     {
       icon: "cash-plus",
-      label: "Record\nPayment",
+      label: t("dashboard.recordPayment"),
       color: colors.success,
       screen: "CashPayment",
     },
     {
       icon: "receipt",
-      label: "Generate\nBilling",
+      label: t("dashboard.generateBillingAction"),
       color: colors.elevator,
       screen: "Billing",
     },
     {
       icon: "bullhorn-outline",
-      label: "Send\nAnnouncement",
+      label: t("dashboard.sendAnnouncement"),
       color: colors.warning,
       screen: "ComposeAnnouncement",
     },
@@ -242,13 +244,13 @@ export default function AdminDashboardScreen() {
         <View style={styles.statsRow}>
           <StatCard
             icon="account-group-outline"
-            label="Residents"
+            label={t("dashboard.residents")}
             value={isLoading ? "..." : String(totalResidents)}
             color={colors.primary}
           />
           <StatCard
             icon="home-city-outline"
-            label="Occupied"
+            label={t("dashboard.occupied")}
             value={isLoading ? "..." : String(occupiedUnits)}
             color={colors.success}
           />
@@ -256,13 +258,13 @@ export default function AdminDashboardScreen() {
         <View style={styles.statsRow}>
           <StatCard
             icon="cash-check"
-            label="Collected"
+            label={t("dashboard.collected")}
             value={isLoading ? "..." : `${totalCollected.toLocaleString()}`}
             color={colors.success}
           />
           <StatCard
             icon="cash-clock"
-            label="Outstanding"
+            label={t("dashboard.outstanding")}
             value={isLoading ? "..." : `${outstanding.toLocaleString()}`}
             color={colors.danger}
           />
@@ -270,7 +272,7 @@ export default function AdminDashboardScreen() {
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <SectionHeader title="Quick Actions" />
+          <SectionHeader title={t("dashboard.quickActions")} />
           <View style={styles.actionsGrid}>
             {quickActions.map((action) => (
               <TouchableOpacity
@@ -296,7 +298,7 @@ export default function AdminDashboardScreen() {
         {/* Overdue Charges */}
         <View style={styles.section}>
           <SectionHeader
-            title="Overdue Charges"
+            title={t("dashboard.overdueCharges")}
             rightElement={
               overdueCharges.length > 0 ? (
                 <View style={styles.countBadge}>
@@ -314,8 +316,8 @@ export default function AdminDashboardScreen() {
           ) : overdueCharges.length === 0 ? (
             <EmptyState
               icon="check-circle-outline"
-              title="No overdue charges"
-              subtitle="All residents are up to date"
+              title={t("dashboard.noOverdueCharges")}
+              subtitle={t("dashboard.allUpToDate")}
             />
           ) : (
             overdueCharges
@@ -327,18 +329,18 @@ export default function AdminDashboardScreen() {
         {/* Month Summary */}
         {report && (
           <View style={styles.section}>
-            <SectionHeader title={`${dayjs().format("MMMM")} Summary`} />
+            <SectionHeader title={t("dashboard.monthlySummary", { month: dayjs().format("MMMM") })} />
             <Card style={styles.summaryCard} variant="elevated">
               <View style={styles.summaryRow}>
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryItemLabel}>Total Expenses</Text>
+                  <Text style={styles.summaryItemLabel}>{t("dashboard.totalExpenses")}</Text>
                   <Text style={styles.summaryItemValue}>
                     {(report.expenses?.total || 0).toLocaleString()} {currency}
                   </Text>
                 </View>
                 <View style={styles.summaryDivider} />
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryItemLabel}>Collection Rate</Text>
+                  <Text style={styles.summaryItemLabel}>{t("dashboard.collectionRate")}</Text>
                   <Text
                     style={[
                       styles.summaryItemValue,

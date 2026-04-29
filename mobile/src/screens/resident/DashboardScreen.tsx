@@ -10,6 +10,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useTranslation } from "react-i18next";
 import { getDashboard } from "../../api/resident";
 import { useAuthStore } from "../../store/auth";
 import {
@@ -75,6 +76,7 @@ export default function DashboardScreen() {
   const currency = useCurrency();
   const user = useAuthStore((s) => s.user);
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ["dashboard"],
@@ -84,30 +86,30 @@ export default function DashboardScreen() {
   const summary = data?.summary;
   const hour = new Date().getHours();
   const greeting =
-    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+    hour < 12 ? t("dashboard.goodMorning") : hour < 18 ? t("dashboard.goodAfternoon") : t("dashboard.goodEvening");
 
   const quickActions = [
     {
       icon: "credit-card-outline",
-      label: "Pay Now",
+      label: t("residentDashboard.payNow"),
       color: colors.primary,
       screen: "Payments",
     },
     {
       icon: "history",
-      label: "History",
+      label: t("residentDashboard.history"),
       color: colors.elevator,
       screen: "Payments",
     },
     {
       icon: "chart-bar",
-      label: "Expenses",
+      label: t("residentDashboard.expenses"),
       color: colors.maintenance,
       screen: "Expenses",
     },
     {
       icon: "bullhorn-outline",
-      label: "News",
+      label: t("residentDashboard.news"),
       color: colors.project,
       screen: "Announcements",
     },
@@ -144,7 +146,7 @@ export default function DashboardScreen() {
       <View style={styles.balanceCard}>
         <View style={styles.balanceTop}>
           <Icon name="wallet-outline" size={24} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.balanceLabel}>Remaining Balance</Text>
+          <Text style={styles.balanceLabel}>{t("residentDashboard.remainingBalance")}</Text>
         </View>
         <Text style={styles.balanceAmount}>
           {isLoading
@@ -159,7 +161,7 @@ export default function DashboardScreen() {
               color="rgba(255,255,255,0.7)"
             />
             <View style={styles.statText}>
-              <Text style={styles.statLabel}>Total Due</Text>
+              <Text style={styles.statLabel}>{t("residentDashboard.totalDue")}</Text>
               <Text style={styles.statValue}>
                 {(summary?.totalDue || 0).toLocaleString()}
               </Text>
@@ -173,7 +175,7 @@ export default function DashboardScreen() {
               color="rgba(255,255,255,0.7)"
             />
             <View style={styles.statText}>
-              <Text style={styles.statLabel}>Total Paid</Text>
+              <Text style={styles.statLabel}>{t("residentDashboard.totalPaid")}</Text>
               <Text style={styles.statValue}>
                 {(summary?.totalPaid || 0).toLocaleString()}
               </Text>
@@ -204,12 +206,12 @@ export default function DashboardScreen() {
       </View>
 
       <View style={styles.section}>
-        <SectionHeader title="Recent Dues" />
+        <SectionHeader title={t("dashboard.recentDues")} />
         {data?.recentDues?.length === 0 ? (
           <EmptyState
             icon="check-circle-outline"
-            title="All caught up!"
-            subtitle="No outstanding dues"
+            title={t("dashboard.allCaughtUp")}
+            subtitle={t("dashboard.noOutstandingDues")}
           />
         ) : (
           data?.recentDues?.map((share) => (

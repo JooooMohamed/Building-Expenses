@@ -11,7 +11,14 @@
       "Bash(node dist/src/main.js)",
       "Bash(python3 -m json.tool)",
       "Bash(curl -s http://localhost:3000/api/v1/admin/billing/resident-unpaid/69d416b2dbfab434aae1a175 -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OWQ0MTZiMmRiZmFiNDM0YWFlMWExNzQiLCJlbWFpbCI6ImFkbWluQGJ1aWxkaW5nLmNvbSIsInJvbGUiOiJhZG1pbiIsImJ1aWxkaW5nSWQiOiI2OWQ0MTZiMmRiZmFiNDM0YWFlMWExNzMiLCJpYXQiOjE3NzU2NTgwMTQsImV4cCI6MTc3NTY1ODkxNH0.Z_HedcQb2shRvV48BsP6TTFo9-MXSohyy6b-94FUgCM')",
-      "Bash(python3 -c ':*)"
+      "Bash(python3 -c ':*)",
+      "Bash(xargs kill:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)",
+      "Bash(git config:*)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "Bash(find /Users/youssefelghzaly/Developer/Building-Expenses/mobile/src -name \"*.tsx\" -exec grep -l \"ErrorBoundary\\\\|catch.*render\\\\|error.*render\" {} \\\\;)"
     ]
   }
 }
